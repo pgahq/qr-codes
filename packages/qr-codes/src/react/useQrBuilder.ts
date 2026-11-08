@@ -42,7 +42,7 @@ export interface UseQrBuilderOptions {
   defaultTab?: BuilderTab
   /** URL prefilled on the URL tab. Default: empty (the field shows a placeholder). */
   defaultUrl?: string
-  /** Look selected on first render. Default: classic. */
+  /** Look selected on first render. Default: fluid. */
   defaultStyle?: QrStyleId
   /** Code color selected on first render. Default: navy. */
   defaultColor?: QrColorId
@@ -82,7 +82,7 @@ export function useQrBuilder(options: UseQrBuilderOptions = {}) {
   const {
     defaultTab = 'url',
     defaultUrl = '',
-    defaultStyle = 'classic',
+    defaultStyle = 'fluid',
     defaultColor = 'navy',
     storageKey = DEFAULT_STORAGE_KEY,
     appearance: baseAppearance,

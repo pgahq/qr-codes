@@ -274,13 +274,15 @@ describe('<QrBuilder />', () => {
   describe('style and color', () => {
     const downloaded = () => vi.mocked(browser.downloadQr).mock.calls[0]![1]!
 
-    it('defaults to the classic look in navy and offers four looks and two colors', async () => {
+    it('defaults to the fluid look in navy and offers four looks and two colors', async () => {
       const { user } = setup({ defaultUrl: 'https://pga.com' })
       expect(screen.getAllByRole('radio', { name: /^(Classic|Rounded|Dots|Fluid)$/ })).toHaveLength(4)
       expect(screen.getAllByRole('radio', { name: /^(Navy|Black)$/ })).toHaveLength(2)
       await user.click(screen.getByRole('button', { name: 'Download' }))
       await waitFor(() => expect(browser.downloadQr).toHaveBeenCalled())
-      expect(downloaded()).toMatchObject({ foreground: '#00205B', dotStyle: 'square', cornerStyle: 'square' })
+      expect(downloaded()).toMatchObject({ foreground: '#00205B', dotStyle: 'fluid', cornerStyle: 'fluid' })
+      expect(screen.getByRole('radio', { name: 'Fluid' }).getAttribute('aria-checked')).toBe('true')
+      expect(screen.getByRole('radio', { name: 'Navy' }).getAttribute('aria-checked')).toBe('true')
     })
 
     it('applies the chosen look and color as a single color, ignoring separate corner colors from the host', async () => {
@@ -288,17 +290,17 @@ describe('<QrBuilder />', () => {
         defaultUrl: 'https://pga.com',
         appearance: { cornerSquareColor: '#0053FF', cornerDotColor: '#0053FF' }
       })
-      await user.click(screen.getByRole('radio', { name: 'Fluid' }))
+      await user.click(screen.getByRole('radio', { name: 'Rounded' }))
       await user.click(screen.getByRole('radio', { name: 'Black' }))
-      expect(screen.getByRole('radio', { name: 'Fluid' }).getAttribute('aria-checked')).toBe('true')
-      expect(screen.getByRole('radio', { name: 'Classic' }).getAttribute('aria-checked')).toBe('false')
+      expect(screen.getByRole('radio', { name: 'Rounded' }).getAttribute('aria-checked')).toBe('true')
+      expect(screen.getByRole('radio', { name: 'Fluid' }).getAttribute('aria-checked')).toBe('false')
 
       await user.click(screen.getByRole('button', { name: 'Download' }))
       await waitFor(() => expect(browser.downloadQr).toHaveBeenCalled())
-      expect(downloaded()).toMatchObject({ foreground: '#000000', dotStyle: 'fluid', cornerStyle: 'fluid' })
+      expect(downloaded()).toMatchObject({ foreground: '#000000', dotStyle: 'rounded', cornerStyle: 'rounded' })
       expect(downloaded().cornerSquareColor).toBeUndefined()
       expect(downloaded().cornerDotColor).toBeUndefined()
-      expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ type: 'download', style: 'fluid', color: 'black' }))
+      expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ type: 'download', style: 'rounded', color: 'black' }))
     })
 
     it('shows miniature previews of the current content in each look', () => {
