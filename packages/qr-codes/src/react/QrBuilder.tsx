@@ -28,9 +28,9 @@ const TABS: { id: BuilderTab; label: string }[] = [
 ]
 
 const TAB_BLURB: Record<BuilderTab, string> = {
-  url: 'People can visit your page just by scanning the QR code, with no typing.',
-  wifi: 'People can connect to your Wi-Fi network just by scanning the QR code.',
-  sms: 'Scanning the QR code will draft a text message on their phone.'
+  url: 'Scan the QR code to open your URL without typing.',
+  wifi: 'Scan the QR code to connect to your Wi-Fi network.',
+  sms: 'Scan the QR code to draft a text message you specify.'
 }
 
 function Field({
