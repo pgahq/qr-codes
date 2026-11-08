@@ -346,10 +346,7 @@ function LogoPicker({
   const otherLogo = logo && !known.includes(logo) ? logo : null
   const noLogo = !logoEnabled || !logo
 
-  const onFile = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-    if (!file) return
+  const addFile = async (file: File) => {
     setUploadError(null)
     setUploading(true)
     try {
@@ -360,6 +357,32 @@ function LogoPicker({
       setUploading(false)
     }
   }
+
+  const onFile = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (file) await addFile(file)
+  }
+
+  const pasteHandler = useRef<(event: ClipboardEvent) => void>(() => {})
+  pasteHandler.current = (event) => {
+    const file = Array.from(event.clipboardData?.files ?? []).find((item) => item.type.startsWith('image/'))
+    if (!file || uploading) return
+    // Pasting text into a field still pastes text; only a clipboard that is purely an image becomes a logo.
+    const target = event.target
+    const editable = target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|TEXTAREA)$/.test(target.tagName))
+    if (editable && event.clipboardData?.getData('text/plain')) return
+    event.preventDefault()
+    if (atLimit) setUploadError(`You can keep ${maxCustomLogos} uploaded logos. Remove one to add another.`)
+    else void addFile(file)
+  }
+
+  useEffect(() => {
+    if (!allowUpload) return
+    const listener = (event: ClipboardEvent) => pasteHandler.current(event)
+    document.addEventListener('paste', listener)
+    return () => document.removeEventListener('paste', listener)
+  }, [allowUpload])
 
   const option = (src: string, label: string, removable: boolean) => (
     <div className="pga-qr-logo-item" key={src}>
@@ -414,7 +437,11 @@ function LogoPicker({
               type="button"
               className="pga-qr-logo-option pga-qr-logo-add"
               aria-label="Upload a custom image"
-              title={atLimit ? `You can keep ${maxCustomLogos} uploaded logos. Remove one to add another.` : 'Upload a custom image'}
+              title={
+                atLimit
+                  ? `You can keep ${maxCustomLogos} uploaded logos. Remove one to add another.`
+                  : 'Upload a custom image, or paste one'
+              }
               disabled={uploading || atLimit}
               onClick={() => fileInput.current?.click()}
             >

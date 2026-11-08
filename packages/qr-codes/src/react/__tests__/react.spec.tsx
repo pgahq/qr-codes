@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { QrBuilder } from '../QrBuilder'
@@ -11,7 +11,7 @@ vi.mock('../../browser', async (importOriginal) => ({
   downloadQr: vi.fn(async () => undefined),
   copyQrToClipboard: vi.fn(async () => undefined),
   copyQrSvgToClipboard: vi.fn(async () => undefined),
-  copyTextToClipboard: vi.fn(async () => undefined)
+  copyTextToClipboard: vi.fn(async () => undefined),
 }))
 
 const browser = await import('../../browser')
@@ -194,6 +194,45 @@ describe('<QrBuilder />', () => {
       await user.upload(document.querySelector('input[type=file]') as HTMLInputElement, file)
     }
 
+    const paste = (target: Element | Document, files: File[], text = '') =>
+      fireEvent.paste(target, { clipboardData: { files, types: files.length ? ['Files'] : ['text/plain'], getData: () => text } })
+
+    it('adds a pasted image as a logo, even when nothing is focused', async () => {
+      setup()
+      paste(document.body, [png('image.png')])
+      const tile = await screen.findByRole('radio', { name: 'Uploaded logo 1' })
+      expect(tile.getAttribute('aria-checked')).toBe('true')
+    })
+
+    it('pastes an image while a field is focused, but plain text still pastes as text', async () => {
+      const { user } = setup()
+      const url = screen.getByLabelText(/^URL/)
+      await user.click(url)
+      paste(url, [png()], 'https://pga.com')
+      expect(screen.queryByRole('radio', { name: 'Uploaded logo 1' })).toBeNull()
+      paste(url, [png()])
+      expect(await screen.findByRole('radio', { name: 'Uploaded logo 1' })).toBeTruthy()
+    })
+
+    it('ignores pasted files that are not images, and pasting is off when uploads are off', async () => {
+      setup()
+      paste(document.body, [new File(['x'], 'notes.txt', { type: 'text/plain' })])
+      expect(screen.queryByRole('radio', { name: 'Uploaded logo 1' })).toBeNull()
+      cleanup()
+      setup({ allowLogoUpload: false })
+      paste(document.body, [png()])
+      await new Promise((resolve) => setTimeout(resolve, 20))
+      expect(screen.queryByRole('radio', { name: 'Uploaded logo 1' })).toBeNull()
+    })
+
+    it('explains when pasting would exceed five logos', async () => {
+      const { user } = setup({ onUploadLogo: (file: File) => Promise.resolve(`https://res.cloudinary.com/pgahq/${file.name}`) })
+      for (let i = 1; i <= 5; i++) await upload(user, png(`logo${i}.png`))
+      await waitFor(() => expect(screen.getAllByRole('button', { name: /^Remove uploaded logo/ })).toHaveLength(5))
+      paste(document.body, [png('extra.png')])
+      expect((await screen.findByRole('alert')).textContent).toContain('5 uploaded logos')
+    })
+
     it('adds, selects, persists and removes uploaded logos', async () => {
       const { user } = setup()
       await upload(user)
@@ -232,7 +271,7 @@ describe('<QrBuilder />', () => {
     it('ignores corrupt or unsafe stored values and can skip storage entirely', async () => {
       window.localStorage.setItem(
         'pgahq:qr-codes:custom-logos',
-        JSON.stringify(['javascript:alert(1)', 'http://insecure.test/a.png', 'https://res.cloudinary.com/pgahq/ok.png', 42])
+        JSON.stringify(['javascript:alert(1)', 'http://insecure.test/a.png', 'https://res.cloudinary.com/pgahq/ok.png', 42]),
       )
       setup()
       expect(await screen.findByRole('radio', { name: 'Uploaded logo 1' })).toBeTruthy()
@@ -287,12 +326,12 @@ describe('<QrBuilder />', () => {
       const { user } = setup({ defaultUrl: 'https://pga.com' })
       expect(screen.getAllByRole('radio', { name: /^(Classic|Rounded|Dots|Fluid)$/ }).map((r) => r.getAttribute('aria-label'))).toEqual([
         'Fluid',
-        'Classic'
+        'Classic',
       ])
       expect(screen.getAllByRole('radio', { name: /^(Navy|Black|Greyscale)$/ }).map((r) => r.getAttribute('aria-label'))).toEqual([
         'Navy',
         'Black',
-        'Greyscale'
+        'Greyscale',
       ])
       await downloadPng(user)
       await waitFor(() => expect(browser.downloadQr).toHaveBeenCalled())
@@ -304,7 +343,7 @@ describe('<QrBuilder />', () => {
     it('applies the chosen look and color as a single color, ignoring separate corner colors from the host', async () => {
       const { user, onEvent } = setup({
         defaultUrl: 'https://pga.com',
-        appearance: { cornerSquareColor: '#0053FF', cornerDotColor: '#0053FF' }
+        appearance: { cornerSquareColor: '#0053FF', cornerDotColor: '#0053FF' },
       })
       await user.click(screen.getByRole('radio', { name: 'Classic' }))
       await user.click(screen.getByRole('radio', { name: 'Black' }))
@@ -463,7 +502,7 @@ describe('<QrBuilder />', () => {
     it('can be built from the builder state, renamed, and disabled when empty', async () => {
       const { user } = setup({
         link: (state: { qr: { payload: string | null } }) => (state.qr.payload ? `https://img.test/?u=${state.qr.payload}` : null),
-        linkLabel: 'Image link'
+        linkLabel: 'Image link',
       })
       expect((screen.getByRole('button', { name: 'Copy image link' }) as HTMLButtonElement).disabled).toBe(true)
       await replaceUrl(user, 'pga.com')
