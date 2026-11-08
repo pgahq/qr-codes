@@ -116,6 +116,7 @@ export function parseQrRequest(params: Params, options: ParseOptions = {}): Resu
   if (logoScale === null) return fail('logoScale must be a number.', 'logoScale')
 
   const caption = str(params, 'caption')
+  const logoGrayscale = bool(params, 'logoGrayscale')
   if (caption !== undefined && caption.length > CAPTION_MAX_LENGTH) {
     return fail(`caption must be ${CAPTION_MAX_LENGTH} characters or fewer.`, 'caption')
   }
@@ -146,7 +147,7 @@ export function parseQrRequest(params: Params, options: ParseOptions = {}): Resu
     ...(str(params, 'bg', 'background') && { background: hexColor(str(params, 'bg', 'background')) }),
     ...(str(params, 'cornerSquareColor') && { cornerSquareColor: hexColor(str(params, 'cornerSquareColor')) }),
     ...(str(params, 'cornerDotColor') && { cornerDotColor: hexColor(str(params, 'cornerDotColor')) }),
-    ...(logoSrc && { logo: { src: logoSrc, ...(logoScale !== undefined && { scale: logoScale }) } })
+    ...(logoSrc && { logo: { src: logoSrc, ...(logoScale !== undefined && { scale: logoScale }), ...(logoGrayscale && { grayscale: true }) } })
   }
 
   return {

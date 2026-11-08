@@ -1,7 +1,28 @@
 'use client'
 
-import { QrBuilder, type QrBuilderEvent } from '@pgahq/qr-codes/react'
+import { PGA_LOGOS } from '@pgahq/qr-codes'
+import { QrBuilder, type QrBuilderEvent, type QrBuilderState } from '@pgahq/qr-codes/react'
 import { useState } from 'react'
+
+/** URL of the same code from this app's /api/qr route (URL codes only, since GET links should not carry secrets). */
+function apiImageLink(state: QrBuilderState): string | null {
+  if (typeof window === 'undefined' || state.tab !== 'url' || !state.qr.payload) return null
+  const { foreground = '#000000', dotStyle = 'square', cornerStyle = 'square', caption, logo } = state.appearance
+  const params = new URLSearchParams({
+    url: state.qr.payload,
+    format: 'png',
+    fg: foreground.replace('#', ''),
+    dotStyle,
+    cornerStyle
+  })
+  if (caption) params.set('caption', caption)
+  const preset = Object.entries(PGA_LOGOS).find(([, value]) => value.src === logo?.src)?.[0]
+  if (preset) {
+    params.set('logo', preset)
+    if (logo?.grayscale) params.set('logoGrayscale', '1')
+  }
+  return `${window.location.origin}/api/qr?${params}`
+}
 
 export default function BuilderPage() {
   const [events, setEvents] = useState<string[]>([])
@@ -20,7 +41,7 @@ export default function BuilderPage() {
       </div>
 
       <div className="card">
-        <QrBuilder onEvent={onEvent} />
+        <QrBuilder onEvent={onEvent} link={apiImageLink} linkLabel="Image link" />
       </div>
 
       <div className="card">

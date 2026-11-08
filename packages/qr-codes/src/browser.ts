@@ -34,7 +34,8 @@ export async function renderQrPngBlob(
 
   return new Promise<Blob>((resolve, reject) =>
     canvas.toBlob(
-      (blob) => (blob ? resolve(blob) : reject(new Error('PNG encoding failed.'))),
+      (blob) =>
+        blob ? resolve(blob) : reject(new Error('PNG encoding failed.')),
       'image/png'
     )
   )
@@ -90,6 +91,33 @@ export async function copyQrToClipboard(
 ): Promise<void> {
   // Passing the promise (not the awaited blob) keeps Safari inside the user gesture.
   await navigator.clipboard.write([
-    new ClipboardItem({ 'image/png': renderQrPngBlob(input, appearance, raster) })
+    new ClipboardItem({
+      'image/png': renderQrPngBlob(input, appearance, raster)
+    })
   ])
+}
+
+/** Copies text to the clipboard, falling back to a hidden textarea where the async API is unavailable (e.g. plain http). */
+export async function copyTextToClipboard(text: string): Promise<void> {
+  if (
+    typeof navigator !== 'undefined' &&
+    typeof navigator.clipboard?.writeText === 'function'
+  ) {
+    try {
+      await navigator.clipboard.writeText(text)
+      return
+    } catch {
+      // Permission or focus problems: try the legacy path below.
+    }
+  }
+  const field = document.createElement('textarea')
+  field.value = text
+  field.setAttribute('readonly', '')
+  field.style.cssText =
+    'position:fixed;top:0;left:0;opacity:0;pointer-events:none'
+  document.body.appendChild(field)
+  field.select()
+  const copied = document.execCommand('copy')
+  field.remove()
+  if (!copied) throw new Error('Could not copy to the clipboard.')
 }

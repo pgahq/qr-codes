@@ -102,4 +102,15 @@ describe('parseQrRequest', () => {
     const result = parseQrRequest({ url: 'pga.org', fg: '00205B', bg: 'fff' })
     expect(result).toMatchObject({ ok: true, value: { appearance: { foreground: '#00205B', background: '#fff' } } })
   })
+
+  it('passes logoGrayscale and the fluid styles through', () => {
+    const result = parseQrRequest(
+      { url: 'pga.org', logo: 'blue', logoGrayscale: '1', dotStyle: 'fluid', cornerStyle: 'fluid' },
+      { logoPresets: { blue: 'https://a.test/b.png' } }
+    )
+    expect(result).toMatchObject({
+      ok: true,
+      value: { appearance: { dotStyle: 'fluid', cornerStyle: 'fluid', logo: { src: 'https://a.test/b.png', grayscale: true } } }
+    })
+  })
 })

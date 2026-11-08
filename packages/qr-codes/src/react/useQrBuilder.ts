@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { PGA_LOGOS, PGA_NAVY, type CornerStyle, type DotStyle, type QrAppearance } from '../appearance'
-import { canCopyQr, copyQrToClipboard, downloadQr } from '../browser'
+import { canCopyQr, copyQrToClipboard, copyTextToClipboard, downloadQr } from '../browser'
 import { suggestCaption, type QrContent, type QrContentType, type WifiSecurity } from '../content'
 import { loadStoredLogos, saveStoredLogos } from './logoFile'
 import { renderQrState } from './useQrSvg'
@@ -29,7 +29,7 @@ export interface LogoPreset {
 }
 
 export interface QrBuilderEvent {
-  type: 'start' | 'download' | 'copy'
+  type: 'start' | 'download' | 'copy' | 'copy-link'
   tab: BuilderTab
   /** Present for download/copy. */
   hasLogo?: boolean
@@ -109,6 +109,7 @@ export function useQrBuilder(options: UseQrBuilderOptions = {}) {
   )
   const [logoEnabled, setLogoEnabled] = useState(true)
   const [copyStatus, setCopyStatus] = useState<ActionStatus>('idle')
+  const [linkStatus, setLinkStatus] = useState<ActionStatus>('idle')
   const [downloadStatus, setDownloadStatus] = useState<ActionStatus>('idle')
   const [actionError, setActionError] = useState<string | null>(null)
 
@@ -254,6 +255,24 @@ export function useQrBuilder(options: UseQrBuilderOptions = {}) {
     }
   }, [appearance, colorId, emit, qr.payload, styleId, tab])
 
+  const linkTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  useEffect(() => () => clearTimeout(linkTimer.current), [])
+
+  const copyLink = useCallback(
+    async (text: string) => {
+      try {
+        await copyTextToClipboard(text)
+        setLinkStatus('done')
+        emit({ type: 'copy-link' }, tab)
+        clearTimeout(linkTimer.current)
+        linkTimer.current = setTimeout(() => setLinkStatus('idle'), COPY_FEEDBACK_MS)
+      } catch {
+        setLinkStatus('error')
+      }
+    },
+    [emit, tab]
+  )
+
   useEffect(() => {
     clearTimeout(copyTimer.current)
     setCopyStatus('idle')
@@ -295,6 +314,8 @@ export function useQrBuilder(options: UseQrBuilderOptions = {}) {
     download,
     copy,
     copyStatus,
+    linkStatus,
+    copyLink,
     downloadStatus,
     copySupported,
     actionError

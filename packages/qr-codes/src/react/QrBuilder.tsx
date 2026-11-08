@@ -19,6 +19,13 @@ export interface QrBuilderProps extends UseQrBuilderOptions {
   allowLogoUpload?: boolean
   /** Placeholder shown until the content is valid. Default: the first logo preset. */
   placeholder?: ReactNode
+  /**
+   * Optional link shown at the bottom with a copy button (for example a URL for the generated image).
+   * Pass a function to build it from the current state; return nothing to hide it.
+   */
+  link?: string | ((state: QrBuilderState) => string | null | undefined)
+  /** Label above the link. Default: "Link". */
+  linkLabel?: string
 }
 
 const TABS: { id: BuilderTab; label: string }[] = [
@@ -102,6 +109,75 @@ function Tabs({ state, idPrefix }: { state: QrBuilderState; idPrefix: string }) 
           {tab.label}
         </button>
       ))}
+    </div>
+  )
+}
+
+function CopyIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path d="M5 15V6a2 2 0 0 1 2-2h9" />
+    </svg>
+  )
+}
+
+function CheckIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M5 12.5l4.5 4.5L19 7.5" />
+    </svg>
+  )
+}
+
+function CopyLink({ state, label, url }: { state: QrBuilderState; label: string; url: string }) {
+  const [copiedUrl, setCopiedUrl] = useState<string | null>(null)
+  const copied = state.linkStatus === 'done' && copiedUrl === url
+  const failed = state.linkStatus === 'error'
+
+  const onCopy = async () => {
+    setCopiedUrl(url)
+    await state.copyLink(url)
+  }
+
+  return (
+    <div className="pga-qr-link">
+      <span className="pga-qr-label">{label}</span>
+      <button
+        type="button"
+        className="pga-qr-link-button"
+        aria-label={`Copy ${label.toLowerCase()}`}
+        title="Copy to clipboard"
+        onClick={onCopy}
+      >
+        <span className="pga-qr-link-text">{url}</span>
+        <span className="pga-qr-link-icon" data-copied={copied || undefined}>
+          {copied ? <CheckIcon /> : <CopyIcon />}
+        </span>
+      </button>
+      <span className="pga-qr-link-status" role="status">
+        {copied ? 'Copied!' : failed ? 'Could not copy. Select the link and copy it manually.' : ''}
+      </span>
     </div>
   )
 }
@@ -430,10 +506,19 @@ function StylePicker({ state }: { state: QrBuilderState }) {
  * Full QR builder: choose a type (URL, Wi-Fi, SMS), add a logo and caption,
  * preview, then download or copy. Import `@pgahq/qr-codes/styles.css` once.
  */
-export function QrBuilder({ className, onUploadLogo, allowLogoUpload = true, placeholder, ...options }: QrBuilderProps) {
+export function QrBuilder({
+  className,
+  onUploadLogo,
+  allowLogoUpload = true,
+  placeholder,
+  link,
+  linkLabel = 'Link',
+  ...options
+}: QrBuilderProps) {
   const idPrefix = useId()
   const state = useQrBuilder(options)
   const ready = !!state.qr.svg
+  const linkUrl = typeof link === 'function' ? link(state) : link
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
   const closeMenu = useCallback(() => setMenu(null), [])
 
@@ -507,6 +592,8 @@ export function QrBuilder({ className, onUploadLogo, allowLogoUpload = true, pla
           </p>
         )}
       </div>
+
+      {linkUrl && <CopyLink state={state} label={linkLabel} url={linkUrl} />}
 
       {menu && (
         <QrContextMenu

@@ -70,6 +70,7 @@ curl -X POST https://example.com/api/qr -H 'content-type: application/json' \
 | `dotStyle` | `square`, `rounded`, `dots`, `fluid` | `square` |
 | `cornerStyle` | `square`, `rounded`, `dot`, `fluid` | `square` |
 | `logo` | preset key (`blue`, `circle`) or an https URL on an allowed host | none |
+| `logoGrayscale` | `1` or `true` to render the logo without color | off |
 | `logoScale` | 0.1-0.3 of QR width | `0.22` |
 | `caption` | up to 80 characters | none |
 | `errorCorrection` | `L`, `M`, `Q`, `H` | `H` with a logo, otherwise `M` |
@@ -101,6 +102,7 @@ import { QrBuilder, QrCode } from '@pgahq/qr-codes/react'
 - Users can keep up to 5 uploaded logos (add with the `+` tile, remove with the `x` on a tile). They are saved in `localStorage` under `pgahq:qr-codes:custom-logos`; set `storageKey` to change the key or `null` to disable saving. Stored values are validated on load (png/jpeg/webp/gif data URIs and https URLs only).
 - The URL field starts empty with `https://pga.com` as placeholder text (`defaultUrl` prefills it). The caption follows the content (`pga.com/championship`, or the Wi-Fi network name) until the user types their own.
 - Below the logos, users pick one of two single-color looks (Fluid, the default, or Classic; each tile is a miniature of their own code) and Navy, Black or Greyscale (a black code with the logo desaturated; `logo.grayscale` in `appearance`). The builder always renders one color, so `appearance.cornerSquareColor` / `cornerDotColor` are ignored there. The builder starts with Fluid in Navy; `defaultStyle` (`fluid` or `classic`) and `defaultColor` change the starting choice, and `download`/`copy` events include `style` and `color`.
+- `link` (a string, or `(state) => string | null`) adds a read-only field with a copy icon at the bottom, for example the URL of the generated image; clicking the text or the icon copies it, and a `copy-link` event is emitted. `linkLabel` renames it. Nothing is shown when no link is given.
 - Right-clicking the code opens a Copy image / Download image menu.
 - Copy is hidden automatically where the browser cannot write images to the clipboard.
 - Need a different layout? `useQrBuilder` is the same state and actions without any markup.

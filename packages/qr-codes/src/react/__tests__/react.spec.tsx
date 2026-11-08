@@ -9,7 +9,8 @@ vi.mock('../../browser', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../browser')>()),
   canCopyQr: () => true,
   downloadQr: vi.fn(async () => undefined),
-  copyQrToClipboard: vi.fn(async () => undefined)
+  copyQrToClipboard: vi.fn(async () => undefined),
+  copyTextToClipboard: vi.fn(async () => undefined)
 }))
 
 const browser = await import('../../browser')
@@ -332,6 +333,44 @@ describe('<QrBuilder />', () => {
       const src = tile.querySelector('img')!.getAttribute('src')!
       expect(src.startsWith('data:image/svg+xml')).toBe(true)
       expect(decodeURIComponent(src)).toContain('fill="#00205B"')
+    })
+  })
+
+  describe('copyable link', () => {
+    it('is hidden unless a link is provided', () => {
+      setup()
+      expect(screen.queryByRole('button', { name: 'Copy link' })).toBeNull()
+    })
+
+    it('copies when the text or the icon is clicked and confirms', async () => {
+      const { user, onEvent } = setup({ link: 'https://qr.pga.org/api/qr?url=pga.com' })
+      const button = screen.getByRole('button', { name: 'Copy link' })
+      expect(button.textContent).toBe('https://qr.pga.org/api/qr?url=pga.com')
+
+      await user.click(screen.getByText('https://qr.pga.org/api/qr?url=pga.com'))
+      await waitFor(() => expect(browser.copyTextToClipboard).toHaveBeenCalledWith('https://qr.pga.org/api/qr?url=pga.com'))
+      expect((await screen.findByRole('status', { name: '' })).textContent).toBe('Copied!')
+      expect(onEvent.mock.calls.map(([event]) => event.type)).toContain('copy-link')
+
+      await user.click(button.querySelector('svg')!)
+      await waitFor(() => expect(browser.copyTextToClipboard).toHaveBeenCalledTimes(2))
+    })
+
+    it('can be built from the builder state, and hides when the function returns nothing', async () => {
+      const { user } = setup({
+        link: (state: { qr: { payload: string | null } }) => (state.qr.payload ? `https://img.test/?u=${state.qr.payload}` : null),
+        linkLabel: 'Image link'
+      })
+      expect(screen.queryByRole('button', { name: 'Copy image link' })).toBeNull()
+      await replaceUrl(user, 'pga.com')
+      expect(screen.getByRole('button', { name: 'Copy image link' }).textContent).toBe('https://img.test/?u=https://pga.com/')
+    })
+
+    it('says so when copying fails', async () => {
+      vi.mocked(browser.copyTextToClipboard).mockRejectedValueOnce(new Error('denied'))
+      const { user } = setup({ link: 'https://example.test/x' })
+      await user.click(screen.getByRole('button', { name: 'Copy link' }))
+      expect((await screen.findByRole('status')).textContent).toMatch(/Could not copy/)
     })
   })
 })

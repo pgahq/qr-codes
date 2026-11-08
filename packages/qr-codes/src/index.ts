@@ -35,6 +35,7 @@ export { logoToDataUri, withInlinedLogo, type InlineLogoOptions } from './assets
 export {
   canCopyQr,
   copyQrToClipboard,
+  copyTextToClipboard,
   downloadQr,
   renderQrPngBlob,
   type DownloadQrOptions,
