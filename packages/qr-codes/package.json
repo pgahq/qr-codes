@@ -1,6 +1,6 @@
 {
   "name": "@pgahq/qr-codes",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Generate PGA-branded QR codes: payload encoding (URL, Wi-Fi, SMS), SVG/PNG rendering, React components, and a Web-standard API handler.",
   "license": "UNLICENSED",
   "sideEffects": [

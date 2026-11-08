@@ -124,7 +124,7 @@ const svg = renderQrSvg(
 
 ## Develop
 
-From the repo root:
+Development needs Node 22 or newer (the React tests use jsdom). The published package itself supports Node 20 and up. From the repo root:
 
 ```bash
 npm ci
