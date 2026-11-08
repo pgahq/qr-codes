@@ -23,6 +23,8 @@ export class QrRenderError extends Error {
 }
 
 const EYE = 7
+const GRAYSCALE_FILTER =
+  '<defs><filter id="pga-qr-gray" color-interpolation-filters="sRGB"><feColorMatrix type="saturate" values="0"/></filter></defs>'
 const HEX_COLOR = /^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i
 const FONT_STACK = 'Arial, Helvetica, sans-serif'
 const LOGO_SCALE = { min: 0.1, max: 0.3, fallback: 0.22 } as const
@@ -63,7 +65,11 @@ function color(value: string, field: string): string {
   return value
 }
 
-function dotPath(style: Exclude<DotStyle, 'fluid'>, x: number, y: number): string {
+function dotPath(
+  style: Exclude<DotStyle, 'fluid'>,
+  x: number,
+  y: number
+): string {
   switch (style) {
     case 'dots': {
       const r = 0.45
@@ -265,7 +271,7 @@ export function renderQrSvg(
 
   const logoMarkup =
     logo && logoZone
-      ? `<image href="${xml(logo.src)}" x="${num(q + (n - logoSide) / 2)}" y="${num(q + (n - logoSide) / 2)}" width="${num(logoSide)}" height="${num(logoSide)}" preserveAspectRatio="xMidYMid meet"/>`
+      ? `<image${logo.grayscale ? ' filter="url(#pga-qr-gray)"' : ''} href="${xml(logo.src)}" x="${num(q + (n - logoSide) / 2)}" y="${num(q + (n - logoSide) / 2)}" width="${num(logoSide)}" height="${num(logoSide)}" preserveAspectRatio="xMidYMid meet"/>`
       : ''
 
   let captionMarkup = ''
@@ -289,6 +295,7 @@ export function renderQrSvg(
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${num(width)} ${num(height)}" width="${options.size}" height="${pixelHeight}" role="img" aria-label="${title}">` +
     `<title>${title}</title>` +
+    (logo?.grayscale ? GRAYSCALE_FILTER : '') +
     `<rect width="${num(width)}" height="${num(height)}" fill="${background}"/>` +
     `<path d="${dots}" fill="${foreground}" shape-rendering="${rendering}"/>` +
     `<g shape-rendering="${rendering}">${eyes}</g>` +

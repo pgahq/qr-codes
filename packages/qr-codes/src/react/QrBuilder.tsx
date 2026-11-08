@@ -417,7 +417,7 @@ function StylePicker({ state }: { state: QrBuilderState }) {
               className="pga-qr-logo-option"
               onClick={() => state.setColorId(item.id)}
             >
-              <span className="pga-qr-swatch" style={{ background: item.value }} aria-hidden="true" />
+              <span className="pga-qr-swatch" style={{ background: item.swatch }} aria-hidden="true" />
             </button>
           ))}
         </div>

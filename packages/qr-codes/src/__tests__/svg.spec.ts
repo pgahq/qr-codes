@@ -11,6 +11,9 @@ import { QrRenderError, renderQrSvg } from '../svg'
 // 1x1 transparent png
 const PIXEL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
 
+// 8x8 solid red png
+const RED = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAEUlEQVR4nGO4IyeHFTEMLQkAid1GAXiz9RcAAAAASUVORK5CYII='
+
 // ZXing is the decoder behind most phone scanners, so passing it is a meaningful scannability check.
 const resolved = createRequire(import.meta.url).resolve('zxing-wasm/reader')
 const wasmPath = join(resolved.slice(0, resolved.lastIndexOf('zxing-wasm') + 'zxing-wasm'.length), 'dist/reader/zxing_reader.wasm')
@@ -105,5 +108,31 @@ describe('renderQrSvg', () => {
     const captioned = renderQrSvg('x', { caption: 'hi' })
     const height = (svg: string) => Number(/ height="(\d+)"/.exec(svg)![1])
     expect(height(captioned)).toBeGreaterThan(height(plain))
+  })
+
+  describe('grayscale logo', () => {
+    const centerPixel = (svg: string) => {
+      const rendered = new Resvg(svg, { fitTo: { mode: 'width', value: 400 } }).render()
+      const offset = (Math.floor(rendered.height / 2) * rendered.width + Math.floor(rendered.width / 2)) * 4
+      const [r, g, b] = [...rendered.pixels.slice(offset, offset + 3)]
+      return { r, g, b }
+    }
+    const content: QrContent = { type: 'url', url: 'https://pga.com' }
+
+    it('keeps a colored logo colored by default', () => {
+      const { r, g, b } = centerPixel(renderQrSvg(content, { logo: { src: RED, scale: 0.3 } }))
+      expect(r).toBeGreaterThan(150)
+      expect(g).toBeLessThan(80)
+      expect(b).toBeLessThan(80)
+    })
+
+    it('removes all color from the logo when asked, and stays scannable', async () => {
+      const svg = renderQrSvg(content, { logo: { src: RED, scale: 0.3, grayscale: true } })
+      const { r, g, b } = centerPixel(svg)
+      expect(Math.abs(r - g)).toBeLessThanOrEqual(2)
+      expect(Math.abs(g - b)).toBeLessThanOrEqual(2)
+      expect(r).toBeLessThan(150)
+      expect(await decode(svg)).toBe('https://pga.com/')
+    })
   })
 })

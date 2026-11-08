@@ -274,13 +274,17 @@ describe('<QrBuilder />', () => {
   describe('style and color', () => {
     const downloaded = () => vi.mocked(browser.downloadQr).mock.calls[0]![1]!
 
-    it('defaults to the fluid look in navy and offers two looks (default first) and two colors', async () => {
+    it('defaults to the fluid look in navy and offers two looks (default first) and three colors', async () => {
       const { user } = setup({ defaultUrl: 'https://pga.com' })
       expect(screen.getAllByRole('radio', { name: /^(Classic|Rounded|Dots|Fluid)$/ }).map((r) => r.getAttribute('aria-label'))).toEqual([
         'Fluid',
         'Classic'
       ])
-      expect(screen.getAllByRole('radio', { name: /^(Navy|Black)$/ })).toHaveLength(2)
+      expect(screen.getAllByRole('radio', { name: /^(Navy|Black|Greyscale)$/ }).map((r) => r.getAttribute('aria-label'))).toEqual([
+        'Navy',
+        'Black',
+        'Greyscale'
+      ])
       await user.click(screen.getByRole('button', { name: 'Download' }))
       await waitFor(() => expect(browser.downloadQr).toHaveBeenCalled())
       expect(downloaded()).toMatchObject({ foreground: '#00205B', dotStyle: 'fluid', cornerStyle: 'fluid' })
@@ -304,6 +308,22 @@ describe('<QrBuilder />', () => {
       expect(downloaded().cornerSquareColor).toBeUndefined()
       expect(downloaded().cornerDotColor).toBeUndefined()
       expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ type: 'download', style: 'classic', color: 'black' }))
+    })
+
+    it('greyscale makes the code black and the logo colorless; other colors leave the logo alone', async () => {
+      const { user, onEvent } = setup({ defaultUrl: 'https://pga.com' })
+      await user.click(screen.getByRole('radio', { name: 'Greyscale' }))
+      await user.click(screen.getByRole('button', { name: 'Download' }))
+      await waitFor(() => expect(browser.downloadQr).toHaveBeenCalledTimes(1))
+      expect(downloaded()).toMatchObject({ foreground: '#000000', logo: { grayscale: true } })
+      expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ type: 'download', color: 'greyscale' }))
+
+      await user.click(screen.getByRole('radio', { name: 'Black' }))
+      await user.click(screen.getByRole('button', { name: 'Download' }))
+      await waitFor(() => expect(browser.downloadQr).toHaveBeenCalledTimes(2))
+      const second = vi.mocked(browser.downloadQr).mock.calls[1]![1]!
+      expect(second).toMatchObject({ foreground: '#000000' })
+      expect(second.logo?.grayscale).toBeFalsy()
     })
 
     it('shows miniature previews of the current content in each look', () => {

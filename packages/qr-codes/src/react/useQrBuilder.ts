@@ -6,7 +6,7 @@ import { loadStoredLogos, saveStoredLogos } from './logoFile'
 import { renderQrState } from './useQrSvg'
 
 export type QrStyleId = 'fluid' | 'classic'
-export type QrColorId = 'navy' | 'black'
+export type QrColorId = 'navy' | 'black' | 'greyscale'
 
 /** Single-colour looks offered by the builder. */
 export const QR_STYLES: readonly { id: QrStyleId; label: string; dotStyle: DotStyle; cornerStyle: CornerStyle }[] = [
@@ -14,9 +14,11 @@ export const QR_STYLES: readonly { id: QrStyleId; label: string; dotStyle: DotSt
   { id: 'classic', label: 'Classic', dotStyle: 'square', cornerStyle: 'square' }
 ]
 
-export const QR_COLORS: readonly { id: QrColorId; label: string; value: string }[] = [
-  { id: 'navy', label: 'Navy', value: PGA_NAVY },
-  { id: 'black', label: 'Black', value: '#000000' }
+/** `greyscale` is a black code with the logo desaturated, so nothing on the page has color. */
+export const QR_COLORS: readonly { id: QrColorId; label: string; value: string; swatch: string; grayscale?: boolean }[] = [
+  { id: 'navy', label: 'Navy', value: PGA_NAVY, swatch: PGA_NAVY },
+  { id: 'black', label: 'Black', value: '#000000', swatch: '#000000' },
+  { id: 'greyscale', label: 'Greyscale', value: '#000000', swatch: 'linear-gradient(135deg, #000000 50%, #9a9a9a 50%)', grayscale: true }
 ]
 
 export type BuilderTab = Extract<QrContentType, 'url' | 'wifi' | 'sms'>
@@ -153,7 +155,7 @@ export function useQrBuilder(options: UseQrBuilderOptions = {}) {
       dotStyle: look.dotStyle,
       cornerStyle: look.cornerStyle,
       caption: caption.trim() || undefined,
-      logo: logoEnabled && logo ? { src: logo } : undefined
+      logo: logoEnabled && logo ? { src: logo, grayscale: color.grayscale } : undefined
     }),
     [baseAppearance, caption, color, look, logo, logoEnabled]
   )

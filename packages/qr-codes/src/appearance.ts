@@ -9,6 +9,8 @@ export interface QrLogo {
   src: string
   /** Logo width as a fraction of the QR code width. Clamped to 0.1-0.3. */
   scale?: number
+  /** Render the logo in greyscale, whatever its original colors. */
+  grayscale?: boolean
 }
 
 export interface QrAppearance {
