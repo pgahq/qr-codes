@@ -1,4 +1,4 @@
-import { PGA_DEFAULT_APPEARANCE, PGA_LOGOS, suggestCaption, type QrAppearance, type QrContent } from '@pgahq/qr-codes'
+import { PGA_DEFAULT_APPEARANCE, PGA_LOGOS, type QrAppearance, type QrContent } from '@pgahq/qr-codes'
 import { QrCode } from '@pgahq/qr-codes/react'
 
 interface Example {
@@ -8,13 +8,14 @@ interface Example {
   appearance?: QrAppearance
 }
 
-const defaultContent: QrContent = { type: 'url', url: 'https://www.pga.org/championship' }
+const defaultContent: QrContent = { type: 'url', url: 'https://pga.com/qr-code' }
+const defaultCaption = 'Make a QR code on PGA.com'
 
 const defaultSettings = [
   ['Color', 'Navy (#00205B) on white'],
   ['Style', 'Fluid dots and corners'],
   ['Logo', 'PGA of America (blue)'],
-  ['Caption', 'Follows the content, e.g. pga.org/championship']
+  ['Caption', 'Follows the content (here pga.com/qr-code) unless you set one. Shown with: Make a QR code on PGA.com']
 ] as const
 
 const examples: Example[] = [
@@ -76,7 +77,7 @@ export default function DisplayPage() {
       <section className="card default-card" aria-labelledby="default-heading">
         <QrCode
           content={defaultContent}
-          appearance={{ size: 512, ...PGA_DEFAULT_APPEARANCE, caption: suggestCaption(defaultContent) }}
+          appearance={{ size: 512, ...PGA_DEFAULT_APPEARANCE, caption: defaultCaption }}
         />
         <div className="stack">
           <div>
