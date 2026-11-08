@@ -3,7 +3,6 @@ export { QrCode, type QrCodeProps } from './QrCode'
 export {
   DEFAULT_LOGO_PRESETS,
   DEFAULT_STORAGE_KEY,
-  DEFAULT_URL,
   MAX_CUSTOM_LOGOS,
   useQrBuilder,
   type ActionStatus,

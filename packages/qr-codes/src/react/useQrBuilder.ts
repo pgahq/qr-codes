@@ -22,7 +22,7 @@ export interface QrBuilderEvent {
 
 export interface UseQrBuilderOptions {
   defaultTab?: BuilderTab
-  /** URL prefilled on the URL tab. Default: https://pga.com */
+  /** URL prefilled on the URL tab. Default: empty (the field shows a placeholder). */
   defaultUrl?: string
   /**
    * localStorage key used to remember uploaded logos between visits.
@@ -39,7 +39,6 @@ export interface UseQrBuilderOptions {
   onEvent?: (event: QrBuilderEvent) => void
 }
 
-export const DEFAULT_URL = 'https://pga.com'
 export const DEFAULT_STORAGE_KEY = 'pgahq:qr-codes:custom-logos'
 export const MAX_CUSTOM_LOGOS = 5
 
@@ -60,7 +59,7 @@ const COPY_FEEDBACK_MS = 2_500
 export function useQrBuilder(options: UseQrBuilderOptions = {}) {
   const {
     defaultTab = 'url',
-    defaultUrl = DEFAULT_URL,
+    defaultUrl = '',
     storageKey = DEFAULT_STORAGE_KEY,
     appearance: baseAppearance,
     logoPresets = DEFAULT_LOGO_PRESETS,

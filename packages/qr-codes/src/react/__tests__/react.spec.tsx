@@ -53,15 +53,20 @@ describe('<QrBuilder />', () => {
     await user.type(input, value)
   }
 
-  it('starts with https://pga.com so a code is ready immediately', () => {
+  it('starts empty with example text as placeholders rather than real values', () => {
     setup()
-    expect((screen.getByLabelText(/^URL/) as HTMLInputElement).value).toBe('https://pga.com')
-    expect(screen.getByRole('img', { name: 'pga.com' })).toBeTruthy()
-    expect((screen.getByRole('button', { name: 'Download' }) as HTMLButtonElement).disabled).toBe(false)
+    const url = screen.getByLabelText(/^URL/) as HTMLInputElement
+    expect(url.value).toBe('')
+    expect(url.placeholder).toBe('https://pga.com')
+    const caption = screen.getByLabelText('Caption') as HTMLInputElement
+    expect(caption.value).toBe('')
+    expect(caption.placeholder).toBe('pga.com')
+    expect(screen.getByText('Your QR code will appear here')).toBeTruthy()
+    expect((screen.getByRole('button', { name: 'Download' }) as HTMLButtonElement).disabled).toBe(true)
   })
 
   it('shows a placeholder and disables actions until the content is valid', async () => {
-    const { user } = setup({ defaultUrl: '' })
+    const { user } = setup()
     expect(screen.getByText('Your QR code will appear here')).toBeTruthy()
     expect((screen.getByRole('button', { name: 'Download' }) as HTMLButtonElement).disabled).toBe(true)
 
@@ -159,7 +164,7 @@ describe('<QrBuilder />', () => {
   it('suggests a caption from the URL until the user writes their own', async () => {
     const { user } = setup()
     const caption = screen.getByLabelText('Caption') as HTMLInputElement
-    expect(caption.value).toBe('pga.com')
+    expect(caption.value).toBe('')
 
     await replaceUrl(user, 'https://www.pga.com/championship/')
     expect(caption.value).toBe('pga.com/championship')
@@ -236,7 +241,7 @@ describe('<QrBuilder />', () => {
 
   describe('right-click menu', () => {
     it('offers copy and download on the code and runs them', async () => {
-      const { user } = setup()
+      const { user } = setup({ defaultUrl: 'https://pga.com' })
       const code = screen.getByRole('img', { name: /QR code|pga\.com/ })
       await user.pointer({ keys: '[MouseRight]', target: code })
 
@@ -252,14 +257,14 @@ describe('<QrBuilder />', () => {
     })
 
     it('closes on Escape and is not offered before there is a code', async () => {
-      const { user } = setup()
+      const { user } = setup({ defaultUrl: 'https://pga.com' })
       await user.pointer({ keys: '[MouseRight]', target: screen.getByRole('img', { name: /QR code|pga\.com/ }) })
       await screen.findByRole('menu')
       await user.keyboard('{Escape}')
       expect(screen.queryByRole('menu')).toBeNull()
 
       cleanup()
-      setup({ defaultUrl: '' })
+      setup()
       await user.pointer({ keys: '[MouseRight]', target: screen.getByText('Your QR code will appear here') })
       expect(screen.queryByRole('menu')).toBeNull()
     })

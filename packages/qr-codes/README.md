@@ -99,7 +99,7 @@ import { QrBuilder, QrCode } from '@pgahq/qr-codes/react'
 - `onEvent` receives `start`, `download` and `copy`, replacing the old hard-coded Google Tag Manager calls. Wire them to GTM, Amplitude, or nothing.
 - `onUploadLogo(file) => Promise<url>` replaces the Cloudinary widget. Without it, uploads are shrunk to 256px and stay in the browser as data URIs.
 - Users can keep up to 5 uploaded logos (add with the `+` tile, remove with the `x` on a tile). They are saved in `localStorage` under `pgahq:qr-codes:custom-logos`; set `storageKey` to change the key or `null` to disable saving. Stored values are validated on load (png/jpeg/webp/gif data URIs and https URLs only).
-- The URL starts as `https://pga.com` (`defaultUrl` to change). The caption follows the content (`pga.com/championship`, or the Wi-Fi network name) until the user types their own.
+- The URL field starts empty with `https://pga.com` as placeholder text (`defaultUrl` prefills it). The caption follows the content (`pga.com/championship`, or the Wi-Fi network name) until the user types their own.
 - Right-clicking the code opens a Copy image / Download image menu.
 - Copy is hidden automatically where the browser cannot write images to the clipboard.
 - Need a different layout? `useQrBuilder` is the same state and actions without any markup.

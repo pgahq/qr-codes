@@ -130,6 +130,11 @@
   font: inherit;
 }
 
+.pga-qr-input::placeholder {
+  color: #97999b;
+  opacity: 1;
+}
+
 .pga-qr-input:focus-visible,
 .pga-qr-tab:focus-visible,
 .pga-qr-button:focus-visible,

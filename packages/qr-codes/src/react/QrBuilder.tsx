@@ -383,7 +383,7 @@ export function QrBuilder({ className, onUploadLogo, allowLogoUpload = true, pla
         className="pga-qr-input"
         type="text"
         maxLength={CAPTION_MAX_LENGTH}
-        placeholder="Shown below the code"
+        placeholder={state.tab === 'url' ? 'pga.com' : 'Shown below the code'}
         value={state.caption}
         onChange={(event) => state.setCaption(event.target.value)}
       />
