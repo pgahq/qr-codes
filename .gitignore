@@ -1,9 +1,0 @@
-node_modules
-dist
-.next
-next-env.d.ts
-*.tsbuildinfo
-*.tgz
-.env
-.env.*
-.DS_Store
