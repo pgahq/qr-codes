@@ -32,7 +32,7 @@ export function QrContextMenu({ x, y, label, items, onClose }: QrContextMenuProp
   }, [x, y])
 
   useEffect(() => {
-    menu.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus()
+    menu.current?.focus({ preventScroll: true })
 
     const close = (event: Event) => {
       if (event.target instanceof Node && menu.current?.contains(event.target)) return
@@ -64,13 +64,15 @@ export function QrContextMenu({ x, y, label, items, onClose }: QrContextMenuProp
     const buttons = [...(menu.current?.querySelectorAll<HTMLButtonElement>('button:not(:disabled)') ?? [])]
     const index = buttons.indexOf(document.activeElement as HTMLButtonElement)
     const step = event.key === 'ArrowDown' ? 1 : -1
-    buttons[(index + step + buttons.length) % buttons.length]?.focus()
+    const target = index < 0 ? (step === 1 ? 0 : buttons.length - 1) : (index + step + buttons.length) % buttons.length
+    buttons[target]?.focus()
   }
 
   return createPortal(
     <div
       ref={menu}
       role="menu"
+      tabIndex={-1}
       aria-label={label}
       className="pga-qr-menu"
       style={{ left: position.left, top: position.top }}
