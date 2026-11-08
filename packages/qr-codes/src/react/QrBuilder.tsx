@@ -28,6 +28,10 @@ export interface QrBuilderProps extends UseQrBuilderOptions {
   onUploadLogo?: (file: File) => Promise<string>
   /** Set false to hide the custom logo upload. */
   allowLogoUpload?: boolean
+  /** Set false to hide the style choices (Fluid, Classic). The builder keeps using `defaultStyle`. Default: true. */
+  allowStyleChoice?: boolean
+  /** Set false to hide the color choices (Navy, Black, Greyscale). The builder keeps using `defaultColor`. Default: true. */
+  allowColorChoice?: boolean
   /** Focus the first field of the form when the builder mounts. Off by default so embeds don't steal focus from the host page. */
   autoFocus?: boolean
   /** Placeholder shown until the content is valid. Default: the first logo preset. */
@@ -450,55 +454,61 @@ function previewFor(payload: string, style: (typeof QR_STYLES)[number], foregrou
   }
 }
 
-function StylePicker({ state }: { state: QrBuilderState }) {
+function StylePicker({ state, showStyles, showColors }: { state: QrBuilderState; showStyles: boolean; showColors: boolean }) {
   const color = QR_COLORS.find((item) => item.id === state.colorId)?.value ?? QR_COLORS[0].value
   const payload = state.qr.payload ?? PREVIEW_SAMPLE
 
   // Tiles show the user's own content, so each one is a true miniature of the final code.
   const previews = useMemo(() => QR_STYLES.map((style) => previewFor(payload, style, color)), [payload, color])
 
+  if (!showStyles && !showColors) return null
+
   return (
     <div className="pga-qr-appearance">
-      <fieldset className="pga-qr-fieldset">
-        <legend className="pga-qr-legend">Style</legend>
-        <div className="pga-qr-logos" role="radiogroup" aria-label="Style">
-          {QR_STYLES.map((style, index) => (
-            <button
-              key={style.id}
-              type="button"
-              role="radio"
-              aria-checked={state.styleId === style.id}
-              aria-label={style.label}
-              title={style.label}
-              className="pga-qr-logo-option pga-qr-style-option"
-              onClick={() => state.setStyleId(style.id)}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={previews[index]} alt="" width={40} height={40} />
-            </button>
-          ))}
-        </div>
-      </fieldset>
+      {showStyles && (
+        <fieldset className="pga-qr-fieldset">
+          <legend className="pga-qr-legend">Style</legend>
+          <div className="pga-qr-logos" role="radiogroup" aria-label="Style">
+            {QR_STYLES.map((style, index) => (
+              <button
+                key={style.id}
+                type="button"
+                role="radio"
+                aria-checked={state.styleId === style.id}
+                aria-label={style.label}
+                title={style.label}
+                className="pga-qr-logo-option pga-qr-style-option"
+                onClick={() => state.setStyleId(style.id)}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={previews[index]} alt="" width={40} height={40} />
+              </button>
+            ))}
+          </div>
+        </fieldset>
+      )}
 
-      <fieldset className="pga-qr-fieldset">
-        <legend className="pga-qr-legend">Color</legend>
-        <div className="pga-qr-logos" role="radiogroup" aria-label="Color">
-          {QR_COLORS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              role="radio"
-              aria-checked={state.colorId === item.id}
-              aria-label={item.label}
-              title={item.label}
-              className="pga-qr-logo-option"
-              onClick={() => state.setColorId(item.id)}
-            >
-              <span className="pga-qr-swatch" style={{ background: item.swatch }} aria-hidden="true" />
-            </button>
-          ))}
-        </div>
-      </fieldset>
+      {showColors && (
+        <fieldset className="pga-qr-fieldset">
+          <legend className="pga-qr-legend">Color</legend>
+          <div className="pga-qr-logos" role="radiogroup" aria-label="Color">
+            {QR_COLORS.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                role="radio"
+                aria-checked={state.colorId === item.id}
+                aria-label={item.label}
+                title={item.label}
+                className="pga-qr-logo-option"
+                onClick={() => state.setColorId(item.id)}
+              >
+                <span className="pga-qr-swatch" style={{ background: item.swatch }} aria-hidden="true" />
+              </button>
+            ))}
+          </div>
+        </fieldset>
+      )}
     </div>
   )
 }
@@ -512,6 +522,8 @@ export function QrBuilder({
   onUploadLogo,
   allowLogoUpload = true,
   autoFocus = false,
+  allowStyleChoice = true,
+  allowColorChoice = true,
   placeholder,
   link,
   linkLabel = 'Link',
@@ -609,7 +621,7 @@ export function QrBuilder({
         </div>
 
         <LogoPicker state={state} allowUpload={allowLogoUpload} onUploadLogo={onUploadLogo} />
-        <StylePicker state={state} />
+        <StylePicker state={state} showStyles={allowStyleChoice} showColors={allowColorChoice} />
       </div>
 
       <div className="pga-qr-preview">

@@ -344,6 +344,32 @@ describe('<QrBuilder />', () => {
     })
   })
 
+  describe('optional style and color choices', () => {
+    it('shows both by default', () => {
+      setup()
+      expect(screen.getByRole('radiogroup', { name: 'Style' })).toBeTruthy()
+      expect(screen.getByRole('radiogroup', { name: 'Color' })).toBeTruthy()
+    })
+
+    it('can hide the styles and keeps rendering the default one', () => {
+      setup({ allowStyleChoice: false, defaultUrl: 'https://pga.com' })
+      expect(screen.queryByRole('radiogroup', { name: 'Style' })).toBeNull()
+      expect(screen.getByRole('radiogroup', { name: 'Color' })).toBeTruthy()
+    })
+
+    it('can hide the colors and keeps rendering the default one', () => {
+      setup({ allowColorChoice: false, defaultColor: 'black', defaultUrl: 'https://pga.com' })
+      expect(screen.queryByRole('radiogroup', { name: 'Color' })).toBeNull()
+      expect(screen.getByRole('radiogroup', { name: 'Style' })).toBeTruthy()
+      expect(document.querySelector('.pga-qr-stage svg')?.outerHTML).toContain('#000000')
+    })
+
+    it('renders nothing for the section when both are hidden', () => {
+      setup({ allowStyleChoice: false, allowColorChoice: false })
+      expect(document.querySelector('.pga-qr-appearance')).toBeNull()
+    })
+  })
+
   describe('autoFocus', () => {
     it('does not take focus by default', () => {
       setup()
