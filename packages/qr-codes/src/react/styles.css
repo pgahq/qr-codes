@@ -1,0 +1,255 @@
+/* @pgahq/qr-codes styles. Override the custom properties on .pga-qr-builder / .pga-qr-code to theme. */
+.pga-qr-builder {
+  --pga-qr-navy: #00234b;
+  --pga-qr-text: #1b2733;
+  --pga-qr-muted: #5b6b7d;
+  --pga-qr-border: #c5ced8;
+  --pga-qr-danger: #b42318;
+  --pga-qr-focus: #1a73e8;
+  --pga-qr-radius: 6px;
+
+  display: grid;
+  gap: 32px;
+  grid-template-columns: minmax(0, 1fr);
+  color: var(--pga-qr-text);
+  font-family: inherit;
+  width: 100%;
+}
+
+@media (min-width: 900px) {
+  .pga-qr-builder {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.pga-qr-settings,
+.pga-qr-panel,
+.pga-qr-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pga-qr-tabs {
+  display: flex;
+  background: var(--pga-qr-navy);
+}
+
+.pga-qr-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 8px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+}
+
+.pga-qr-tab[aria-selected='true'] {
+  opacity: 1;
+  border-bottom-color: #c5a14a;
+}
+
+.pga-qr-tab-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.pga-qr-tab-title {
+  font-size: 0.6875rem;
+  opacity: 0.8;
+}
+
+.pga-qr-subtitle {
+  margin: 0;
+  font-weight: 600;
+}
+
+.pga-qr-description,
+.pga-qr-hint {
+  margin: 0;
+  color: var(--pga-qr-muted);
+  font-size: 0.875rem;
+}
+
+.pga-qr-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pga-qr-label,
+.pga-qr-legend {
+  color: #46576a;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.pga-qr-required {
+  color: var(--pga-qr-danger);
+}
+
+.pga-qr-input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--pga-qr-border);
+  border-radius: var(--pga-qr-radius);
+  background: #fff;
+  color: inherit;
+  font: inherit;
+}
+
+.pga-qr-input:focus-visible,
+.pga-qr-tab:focus-visible,
+.pga-qr-button:focus-visible,
+.pga-qr-logo-option:focus-visible,
+.pga-qr-check input:focus-visible {
+  outline: 3px solid var(--pga-qr-focus);
+  outline-offset: 2px;
+}
+
+.pga-qr-error {
+  margin: 0;
+  color: var(--pga-qr-danger);
+  font-size: 0.875rem;
+}
+
+.pga-qr-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9375rem;
+}
+
+.pga-qr-fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.pga-qr-logos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pga-qr-logo-option {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  padding: 0;
+  border: 1px solid var(--pga-qr-border);
+  border-radius: var(--pga-qr-radius);
+  background: #fff;
+  cursor: pointer;
+}
+
+.pga-qr-logo-option[aria-checked='true'] {
+  border: 2px solid var(--pga-qr-navy);
+}
+
+.pga-qr-logo-option img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+}
+
+.pga-qr-button {
+  min-height: 48px;
+  padding: 0 20px;
+  border: 1px solid var(--pga-qr-navy);
+  border-radius: 0;
+  background: var(--pga-qr-navy);
+  color: #fff;
+  font: inherit;
+  font-size: 0.9375rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  flex: 1;
+}
+
+.pga-qr-button:hover:not(:disabled) {
+  background: #4f565c;
+  border-color: #4f565c;
+}
+
+.pga-qr-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.pga-qr-button-secondary {
+  background: transparent;
+  color: var(--pga-qr-navy);
+  border-color: #494e5b;
+  flex: none;
+  align-self: flex-start;
+}
+
+.pga-qr-stage {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  max-width: 520px;
+  margin-inline: auto;
+}
+
+.pga-qr-code {
+  width: 100%;
+  line-height: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--pga-qr-border);
+}
+
+.pga-qr-code svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.pga-qr-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border: 1px solid var(--pga-qr-text);
+  border-radius: 28px;
+  color: var(--pga-qr-muted);
+  text-align: center;
+  font-size: 0.875rem;
+}
+
+.pga-qr-placeholder img {
+  width: 55%;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+}
+
+.pga-qr-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  max-width: 520px;
+  margin-inline: auto;
+}

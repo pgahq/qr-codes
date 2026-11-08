@@ -1,0 +1,19 @@
+{
+  "name": "qr-codes",
+  "private": true,
+  "description": "PGA QR code package (@pgahq/qr-codes) and its Next.js playground.",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "npm run build -w @pgahq/qr-codes",
+    "typecheck": "npm run typecheck -w @pgahq/qr-codes && npm run build -w @pgahq/qr-codes && npm run typecheck -w @pgahq/qr-codes-playground",
+    "test": "npm test -w @pgahq/qr-codes",
+    "dev": "npm run build -w @pgahq/qr-codes && npm run dev -w @pgahq/qr-codes-playground",
+    "build:playground": "npm run build -w @pgahq/qr-codes && npm run build -w @pgahq/qr-codes-playground"
+  }
+}

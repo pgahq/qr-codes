@@ -1,0 +1,207 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { PGA_LOGOS, type QrAppearance } from '../appearance'
+import { canCopyQr, copyQrToClipboard, downloadQr } from '../browser'
+import type { QrContent, QrContentType, WifiSecurity } from '../content'
+import { renderQrState } from './useQrSvg'
+
+export type BuilderTab = Extract<QrContentType, 'url' | 'wifi' | 'sms'>
+
+export interface LogoPreset {
+  label: string
+  src: string
+}
+
+export interface QrBuilderEvent {
+  type: 'start' | 'download' | 'copy'
+  tab: BuilderTab
+  /** Present for download/copy. */
+  hasLogo?: boolean
+  hasCaption?: boolean
+}
+
+export interface UseQrBuilderOptions {
+  defaultTab?: BuilderTab
+  /** Base styling (colors, dot/corner styles, size). Logo and caption are managed by the builder. */
+  appearance?: QrAppearance
+  logoPresets?: readonly LogoPreset[]
+  /** Logo selected on first render. Default: the first preset. Pass `null` for none. */
+  defaultLogo?: string | null
+  /** Base file name for downloads when there is no caption. */
+  filename?: string
+  onEvent?: (event: QrBuilderEvent) => void
+}
+
+export const DEFAULT_LOGO_PRESETS: readonly LogoPreset[] = [
+  { label: PGA_LOGOS.blue.label, src: PGA_LOGOS.blue.src },
+  { label: PGA_LOGOS.circle.label, src: PGA_LOGOS.circle.src }
+]
+
+export type ActionStatus = 'idle' | 'working' | 'done' | 'error'
+
+const COPY_FEEDBACK_MS = 2_500
+
+/**
+ * Headless state for a QR builder: form fields per content type, logo and
+ * caption, the derived QR, and download/copy actions. `QrBuilder` is one UI on
+ * top of it; use it directly to build a different layout.
+ */
+export function useQrBuilder(options: UseQrBuilderOptions = {}) {
+  const {
+    defaultTab = 'url',
+    appearance: baseAppearance,
+    logoPresets = DEFAULT_LOGO_PRESETS,
+    filename = 'PGA-qr-code',
+    onEvent
+  } = options
+
+  const [tab, setTabState] = useState<BuilderTab>(defaultTab)
+  const [url, setUrl] = useState('')
+  const [wifi, setWifi] = useState<{
+    ssid: string
+    password: string
+    security: WifiSecurity
+    hidden: boolean
+  }>({ ssid: '', password: '', security: 'WPA', hidden: false })
+  const [sms, setSms] = useState({ phone: '', message: '' })
+  const [caption, setCaption] = useState('')
+  const [logo, setLogoState] = useState<string | null>(
+    options.defaultLogo === undefined ? (logoPresets[0]?.src ?? null) : options.defaultLogo
+  )
+  const [logoEnabled, setLogoEnabled] = useState(true)
+  const [copyStatus, setCopyStatus] = useState<ActionStatus>('idle')
+  const [downloadStatus, setDownloadStatus] = useState<ActionStatus>('idle')
+  const [actionError, setActionError] = useState<string | null>(null)
+
+  const started = useRef(false)
+  const onEventRef = useRef(onEvent)
+  onEventRef.current = onEvent
+  const copyTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  useEffect(() => () => clearTimeout(copyTimer.current), [])
+
+  const emit = useCallback((event: Omit<QrBuilderEvent, 'tab'>, currentTab: BuilderTab) => {
+    onEventRef.current?.({ ...event, tab: currentTab })
+  }, [])
+
+  const markStarted = useCallback(
+    (currentTab: BuilderTab) => {
+      if (started.current) return
+      started.current = true
+      emit({ type: 'start' }, currentTab)
+    },
+    [emit]
+  )
+
+  const content: QrContent = useMemo(() => {
+    switch (tab) {
+      case 'url':
+        return { type: 'url', url }
+      case 'wifi':
+        return { type: 'wifi', ...wifi }
+      case 'sms':
+        return { type: 'sms', ...sms }
+    }
+  }, [tab, url, wifi, sms])
+
+  const appearance: QrAppearance = useMemo(
+    () => ({
+      ...baseAppearance,
+      caption: caption.trim() || undefined,
+      logo: logoEnabled && logo ? { src: logo } : undefined
+    }),
+    [baseAppearance, caption, logo, logoEnabled]
+  )
+
+  const qr = useMemo(() => renderQrState(content, appearance), [content, appearance])
+
+  const setTab = useCallback(
+    (next: BuilderTab) => {
+      setTabState(next)
+      markStarted(next)
+    },
+    [markStarted]
+  )
+
+  /** Wraps a field setter so the first edit is reported once. */
+  const track = useCallback(
+    <A extends unknown[]>(setter: (...args: A) => void) =>
+      (...args: A) => {
+        markStarted(tab)
+        setter(...args)
+      },
+    [markStarted, tab]
+  )
+
+  const setLogo = useCallback((src: string) => {
+    setLogoState(src)
+    setLogoEnabled(true)
+  }, [])
+
+  const download = useCallback(async () => {
+    if (!qr.payload) return
+    setDownloadStatus('working')
+    setActionError(null)
+    try {
+      await downloadQr(qr.payload, appearance, { filename: caption.trim() || filename })
+      setDownloadStatus('done')
+      emit({ type: 'download', hasLogo: !!appearance.logo, hasCaption: !!appearance.caption }, tab)
+    } catch (error) {
+      setDownloadStatus('error')
+      setActionError(error instanceof Error ? error.message : 'Download failed.')
+    }
+  }, [appearance, caption, emit, filename, qr.payload, tab])
+
+  const copy = useCallback(async () => {
+    if (!qr.payload) return
+    setCopyStatus('working')
+    setActionError(null)
+    try {
+      await copyQrToClipboard(qr.payload, appearance)
+      setCopyStatus('done')
+      emit({ type: 'copy', hasLogo: !!appearance.logo, hasCaption: !!appearance.caption }, tab)
+      clearTimeout(copyTimer.current)
+      copyTimer.current = setTimeout(() => setCopyStatus('idle'), COPY_FEEDBACK_MS)
+    } catch (error) {
+      setCopyStatus('error')
+      setActionError(error instanceof Error ? error.message : 'Copy failed.')
+    }
+  }, [appearance, emit, qr.payload, tab])
+
+  useEffect(() => {
+    clearTimeout(copyTimer.current)
+    setCopyStatus('idle')
+    setDownloadStatus('idle')
+    setActionError(null)
+  }, [qr.svg])
+
+  const [copySupported, setCopySupported] = useState(false)
+  useEffect(() => setCopySupported(canCopyQr()), [])
+
+  return {
+    tab,
+    setTab,
+    url,
+    setUrl: track(setUrl),
+    wifi,
+    setWifi: track(setWifi),
+    sms,
+    setSms: track(setSms),
+    caption,
+    setCaption: track(setCaption),
+    logo,
+    logoEnabled,
+    setLogo: track(setLogo),
+    setLogoEnabled: track(setLogoEnabled),
+    logoPresets,
+    content,
+    appearance,
+    qr,
+    download,
+    copy,
+    copyStatus,
+    downloadStatus,
+    copySupported,
+    actionError
+  }
+}
+
+export type QrBuilderState = ReturnType<typeof useQrBuilder>

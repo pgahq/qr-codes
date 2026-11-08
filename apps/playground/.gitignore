@@ -1,0 +1,5 @@
+node_modules
+.next
+.tarballs
+next-env.d.ts
+*.tsbuildinfo
