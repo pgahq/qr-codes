@@ -5,15 +5,13 @@ import { suggestCaption, type QrContent, type QrContentType, type WifiSecurity }
 import { loadStoredLogos, saveStoredLogos } from './logoFile'
 import { renderQrState } from './useQrSvg'
 
-export type QrStyleId = 'classic' | 'rounded' | 'dots' | 'fluid'
+export type QrStyleId = 'fluid' | 'classic'
 export type QrColorId = 'navy' | 'black'
 
 /** Single-colour looks offered by the builder. */
 export const QR_STYLES: readonly { id: QrStyleId; label: string; dotStyle: DotStyle; cornerStyle: CornerStyle }[] = [
-  { id: 'classic', label: 'Classic', dotStyle: 'square', cornerStyle: 'square' },
-  { id: 'rounded', label: 'Rounded', dotStyle: 'rounded', cornerStyle: 'rounded' },
-  { id: 'dots', label: 'Dots', dotStyle: 'dots', cornerStyle: 'dot' },
-  { id: 'fluid', label: 'Fluid', dotStyle: 'fluid', cornerStyle: 'fluid' }
+  { id: 'fluid', label: 'Fluid', dotStyle: 'fluid', cornerStyle: 'fluid' },
+  { id: 'classic', label: 'Classic', dotStyle: 'square', cornerStyle: 'square' }
 ]
 
 export const QR_COLORS: readonly { id: QrColorId; label: string; value: string }[] = [
