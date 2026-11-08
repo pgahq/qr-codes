@@ -13,16 +13,16 @@
   --pga-qr-radius: 6px;
 
   display: grid;
-  gap: 32px;
+  gap: 24px;
   grid-template-columns: minmax(0, 1fr);
   color: var(--pga-qr-text);
   font-family: inherit;
   width: 100%;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 800px) {
   .pga-qr-builder {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 340px);
     align-items: start;
   }
 }
@@ -32,33 +32,31 @@
 .pga-qr-preview {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .pga-qr-tabs {
   display: flex;
   gap: 4px;
-  padding: 4px;
+  padding: 3px;
   background: var(--pga-qr-silver);
   border: 1px solid var(--pga-qr-birdie);
-  border-radius: 10px;
+  border-radius: var(--pga-qr-radius);
 }
 
 .pga-qr-tab {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 10px 8px;
+  min-height: 36px;
+  padding: 0 8px;
   border: 0;
-  border-radius: 7px;
+  border-radius: 4px;
   background: transparent;
   color: var(--pga-qr-graphite);
   font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
   cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
   transition: background-color 120ms ease, color 120ms ease;
 }
 
@@ -72,22 +70,17 @@
   color: #fff;
 }
 
-.pga-qr-tab-label {
-  font-size: 0.8125rem;
-  font-weight: 600;
-}
-
-.pga-qr-tab-title {
-  font-size: 0.6875rem;
-  opacity: 0.75;
-}
-
-.pga-qr-subtitle {
+.pga-qr-description {
   margin: 0;
-  font-weight: 600;
+  color: var(--pga-qr-muted);
+  font-size: 0.875rem;
 }
 
-.pga-qr-description,
+.pga-qr-description strong {
+  color: var(--pga-qr-navy);
+}
+
+.pga-qr-hint,
 .pga-qr-hint {
   margin: 0;
   color: var(--pga-qr-muted);
@@ -97,7 +90,7 @@
 .pga-qr-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .pga-qr-label,
@@ -114,8 +107,8 @@
 .pga-qr-input {
   width: 100%;
   box-sizing: border-box;
-  min-height: 44px;
-  padding: 10px 12px;
+  min-height: 40px;
+  padding: 6px 12px;
   border: 1px solid var(--pga-qr-border);
   border-radius: var(--pga-qr-radius);
   background: #fff;
@@ -148,11 +141,18 @@
 .pga-qr-fieldset {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   margin: 0;
   padding: 0;
   border: 0;
   min-width: 0;
+}
+
+.pga-qr-logo-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
 }
 
 .pga-qr-logos {
@@ -164,8 +164,8 @@
 .pga-qr-logo-option {
   display: grid;
   place-items: center;
-  width: 76px;
-  height: 76px;
+  width: 52px;
+  height: 52px;
   padding: 0;
   border: 1px solid var(--pga-qr-border);
   border-radius: var(--pga-qr-radius);
@@ -178,14 +178,14 @@
 }
 
 .pga-qr-logo-option img {
-  width: 56px;
-  height: 56px;
+  width: 38px;
+  height: 38px;
   object-fit: contain;
 }
 
 .pga-qr-button {
-  min-height: 48px;
-  padding: 0 20px;
+  min-height: 40px;
+  padding: 0 16px;
   border: 1px solid var(--pga-qr-navy);
   border-radius: 0;
   background: var(--pga-qr-navy);
@@ -213,7 +213,8 @@
   color: var(--pga-qr-navy);
   border-color: var(--pga-qr-navy);
   flex: none;
-  align-self: flex-start;
+  min-height: 36px;
+  font-size: 0.8125rem;
 }
 
 .pga-qr-button-secondary:hover:not(:disabled) {
@@ -225,7 +226,7 @@
   display: grid;
   place-items: center;
   width: 100%;
-  max-width: 520px;
+  max-width: 360px;
   margin-inline: auto;
 }
 
@@ -266,8 +267,8 @@
 
 .pga-qr-actions {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   width: 100%;
-  max-width: 520px;
+  max-width: 360px;
   margin-inline: auto;
 }

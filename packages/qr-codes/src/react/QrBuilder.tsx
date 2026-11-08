@@ -2,12 +2,7 @@ import { useId, useRef, useState, type ChangeEvent, type KeyboardEvent, type Rea
 import { CAPTION_MAX_LENGTH } from '../appearance'
 import { SMS_MESSAGE_MAX_LENGTH, normalizeUrl } from '../content'
 import { QrCode } from './QrCode'
-import {
-  useQrBuilder,
-  type BuilderTab,
-  type QrBuilderState,
-  type UseQrBuilderOptions
-} from './useQrBuilder'
+import { useQrBuilder, type BuilderTab, type QrBuilderState, type UseQrBuilderOptions } from './useQrBuilder'
 
 export interface QrBuilderProps extends UseQrBuilderOptions {
   className?: string
@@ -22,10 +17,10 @@ export interface QrBuilderProps extends UseQrBuilderOptions {
   placeholder?: ReactNode
 }
 
-const TABS: { id: BuilderTab; label: string; title: string }[] = [
-  { id: 'url', label: 'Open webpage', title: 'URL' },
-  { id: 'wifi', label: 'Join Wi-Fi', title: 'Wi-Fi' },
-  { id: 'sms', label: 'Send a text', title: 'SMS' }
+const TABS: { id: BuilderTab; label: string }[] = [
+  { id: 'url', label: 'Open webpage' },
+  { id: 'wifi', label: 'Join Wi-Fi' },
+  { id: 'sms', label: 'Send a text' }
 ]
 
 const TAB_COPY: Record<BuilderTab, { subtitle: string; description: string }> = {
@@ -126,8 +121,7 @@ function Tabs({ state, idPrefix }: { state: QrBuilderState; idPrefix: string }) 
           onClick={() => state.setTab(tab.id)}
           onKeyDown={onKeyDown}
         >
-          <span className="pga-qr-tab-label">{tab.label}</span>
-          <span className="pga-qr-tab-title">{tab.title}</span>
+          {tab.label}
         </button>
       ))}
     </div>
@@ -138,8 +132,7 @@ function ContentFields({ state, idPrefix }: { state: QrBuilderState; idPrefix: s
   const { tab, qr } = state
   const [touched, setTouched] = useState<Record<string, boolean>>({})
   const touch = (field: string) => setTouched((prev) => ({ ...prev, [field]: true }))
-  const errorFor = (field: string) =>
-    qr.error && qr.field === field && (field === 'message' || touched[field]) ? qr.error : null
+  const errorFor = (field: string) => (qr.error && qr.field === field && (field === 'message' || touched[field]) ? qr.error : null)
 
   if (tab === 'url') {
     const normalized = state.url.trim() ? normalizeUrl(state.url) : null
@@ -188,7 +181,12 @@ function ContentFields({ state, idPrefix }: { state: QrBuilderState; idPrefix: s
             id={`${idPrefix}-security`}
             className="pga-qr-input"
             value={wifi.security}
-            onChange={(event) => state.setWifi({ ...wifi, security: event.target.value as typeof wifi.security })}
+            onChange={(event) =>
+              state.setWifi({
+                ...wifi,
+                security: event.target.value as typeof wifi.security
+              })
+            }
           >
             <option value="WEP">WEP</option>
             <option value="WPA">WPA/WPA2</option>
@@ -290,65 +288,71 @@ function LogoPicker({
   return (
     <fieldset className="pga-qr-fieldset">
       <legend className="pga-qr-legend">Logo</legend>
-      <div className="pga-qr-logos" role="radiogroup" aria-label="Logo examples">
-        {state.logoPresets.map((preset) => {
-          const selected = state.logoEnabled && state.logo === preset.src
-          return (
+      <div className="pga-qr-logo-row">
+        <div className="pga-qr-logos" role="radiogroup" aria-label="Logo examples">
+          {state.logoPresets.map((preset) => {
+            const selected = state.logoEnabled && state.logo === preset.src
+            return (
+              <button
+                key={preset.src}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                aria-label={preset.label}
+                className="pga-qr-logo-option"
+                onClick={() => state.setLogo(preset.src)}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={preset.src} alt="" width={38} height={38} />
+              </button>
+            )
+          })}
+          {state.logo && !isPreset && (
             <button
-              key={preset.src}
               type="button"
               role="radio"
-              aria-checked={selected}
-              aria-label={preset.label}
+              aria-checked={state.logoEnabled}
+              aria-label="Your uploaded logo"
               className="pga-qr-logo-option"
-              onClick={() => state.setLogo(preset.src)}
+              onClick={() => state.setLogo(state.logo!)}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={preset.src} alt="" width={56} height={56} />
+              <img src={state.logo} alt="" width={38} height={38} />
             </button>
-          )
-        })}
-        {state.logo && !isPreset && (
-          <button
-            type="button"
-            role="radio"
-            aria-checked={state.logoEnabled}
-            aria-label="Your uploaded logo"
-            className="pga-qr-logo-option"
-            onClick={() => state.setLogo(state.logo!)}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={state.logo} alt="" width={56} height={56} />
-          </button>
+          )}
+        </div>
+
+        {allowUpload && (
+          <>
+            <input
+              ref={fileInput}
+              id={`${idPrefix}-logo-file`}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              hidden
+              onChange={onFile}
+            />
+            <button
+              type="button"
+              className="pga-qr-button pga-qr-button-secondary"
+              disabled={uploading}
+              onClick={() => fileInput.current?.click()}
+            >
+              {uploading ? 'Uploading…' : 'Upload a custom image'}
+            </button>
+          </>
+        )}
+        {state.logo && (
+          <label className="pga-qr-check">
+            <input type="checkbox" checked={!state.logoEnabled} onChange={(event) => state.setLogoEnabled(!event.target.checked)} />
+            No logo
+          </label>
         )}
       </div>
-
-      {allowUpload && (
-        <>
-          <input
-            ref={fileInput}
-            id={`${idPrefix}-logo-file`}
-            type="file"
-            accept="image/png,image/jpeg,image/webp,image/gif"
-            hidden
-            onChange={onFile}
-          />
-          <button type="button" className="pga-qr-button pga-qr-button-secondary" disabled={uploading} onClick={() => fileInput.current?.click()}>
-            {uploading ? 'Uploading…' : 'Upload a custom image'}
-          </button>
-        </>
-      )}
       {uploadError && (
         <p className="pga-qr-error" role="alert">
           {uploadError}
         </p>
-      )}
-
-      {state.logo && (
-        <label className="pga-qr-check">
-          <input type="checkbox" checked={!state.logoEnabled} onChange={(event) => state.setLogoEnabled(!event.target.checked)} />
-          No logo
-        </label>
       )}
     </fieldset>
   )
@@ -358,13 +362,7 @@ function LogoPicker({
  * Full QR builder: choose a type (URL, Wi-Fi, SMS), add a logo and caption,
  * preview, then download or copy. Import `@pgahq/qr-codes/styles.css` once.
  */
-export function QrBuilder({
-  className,
-  onUploadLogo,
-  allowLogoUpload = true,
-  placeholder,
-  ...options
-}: QrBuilderProps) {
+export function QrBuilder({ className, onUploadLogo, allowLogoUpload = true, placeholder, ...options }: QrBuilderProps) {
   const idPrefix = useId()
   const state = useQrBuilder(options)
   const ready = !!state.qr.svg
@@ -376,8 +374,9 @@ export function QrBuilder({
         <Tabs state={state} idPrefix={idPrefix} />
 
         <div role="tabpanel" id={`${idPrefix}-panel`} aria-labelledby={`${idPrefix}-tab-${state.tab}`} className="pga-qr-panel">
-          <p className="pga-qr-subtitle">{copy.subtitle}</p>
-          <p className="pga-qr-description">{copy.description}</p>
+          <p className="pga-qr-description">
+            <strong>{copy.subtitle}</strong> {copy.description}
+          </p>
           <ContentFields key={state.tab} state={state} idPrefix={idPrefix} />
         </div>
 
@@ -418,7 +417,12 @@ export function QrBuilder({
             {state.downloadStatus === 'working' ? 'Preparing…' : 'Download'}
           </button>
           {state.copySupported && (
-            <button type="button" className="pga-qr-button" disabled={!ready || state.copyStatus === 'working' || state.copyStatus === 'done'} onClick={state.copy}>
+            <button
+              type="button"
+              className="pga-qr-button"
+              disabled={!ready || state.copyStatus === 'working' || state.copyStatus === 'done'}
+              onClick={state.copy}
+            >
               {state.copyStatus === 'done' ? 'Copied!' : 'Copy'}
             </button>
           )}
