@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { encodeQrContent, escapeWifiField, normalizePhone, normalizeUrl } from '../content'
+import { encodeQrContent, escapeWifiField, normalizePhone, normalizeUrl, suggestCaption } from '../content'
 
 describe('normalizeUrl', () => {
   it.each([
@@ -55,5 +55,28 @@ describe('encodeQrContent', () => {
       ok: false,
       field: 'message'
     })
+  })
+})
+
+describe('suggestCaption', () => {
+  it.each([
+    ['https://pga.com', 'pga.com'],
+    ['https://www.pga.com/', 'pga.com'],
+    ['pga.com/championship/?utm=1#top', 'pga.com/championship'],
+    ['http://www.pga.com/a/b/', 'pga.com/a/b']
+  ])('shortens %s', (url, expected) => {
+    expect(suggestCaption({ type: 'url', url })).toBe(expected)
+  })
+
+  it('cuts very long addresses with an ellipsis', () => {
+    const caption = suggestCaption({ type: 'url', url: 'https://www.pga.com/championship/tickets/general-admission-weekly-pass' })
+    expect(caption.length).toBeLessThanOrEqual(40)
+    expect(caption.endsWith('\u2026')).toBe(true)
+  })
+
+  it('uses the network name for Wi-Fi and nothing for invalid or other content', () => {
+    expect(suggestCaption({ type: 'wifi', ssid: ' Club Guest ' })).toBe('Club Guest')
+    expect(suggestCaption({ type: 'url', url: 'not a url' })).toBe('')
+    expect(suggestCaption({ type: 'sms', phone: '+18005551212' })).toBe('')
   })
 })

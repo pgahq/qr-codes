@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { PGA_LOGOS, type QrAppearance } from '../appearance'
 import { canCopyQr, copyQrToClipboard, downloadQr } from '../browser'
-import type { QrContent, QrContentType, WifiSecurity } from '../content'
+import { suggestCaption, type QrContent, type QrContentType, type WifiSecurity } from '../content'
+import { loadStoredLogos, saveStoredLogos } from './logoFile'
 import { renderQrState } from './useQrSvg'
 
 export type BuilderTab = Extract<QrContentType, 'url' | 'wifi' | 'sms'>
@@ -23,6 +24,11 @@ export interface UseQrBuilderOptions {
   defaultTab?: BuilderTab
   /** URL prefilled on the URL tab. Default: https://pga.com */
   defaultUrl?: string
+  /**
+   * localStorage key used to remember uploaded logos between visits.
+   * Pass `null` to keep them for the current page only.
+   */
+  storageKey?: string | null
   /** Base styling (colors, dot/corner styles, size). Logo and caption are managed by the builder. */
   appearance?: QrAppearance
   logoPresets?: readonly LogoPreset[]
@@ -34,6 +40,8 @@ export interface UseQrBuilderOptions {
 }
 
 export const DEFAULT_URL = 'https://pga.com'
+export const DEFAULT_STORAGE_KEY = 'pgahq:qr-codes:custom-logos'
+export const MAX_CUSTOM_LOGOS = 5
 
 export const DEFAULT_LOGO_PRESETS: readonly LogoPreset[] = [
   { label: PGA_LOGOS.blue.label, src: PGA_LOGOS.blue.src },
@@ -53,6 +61,7 @@ export function useQrBuilder(options: UseQrBuilderOptions = {}) {
   const {
     defaultTab = 'url',
     defaultUrl = DEFAULT_URL,
+    storageKey = DEFAULT_STORAGE_KEY,
     appearance: baseAppearance,
     logoPresets = DEFAULT_LOGO_PRESETS,
     filename = 'PGA-qr-code',
@@ -68,7 +77,8 @@ export function useQrBuilder(options: UseQrBuilderOptions = {}) {
     hidden: boolean
   }>({ ssid: '', password: '', security: 'WPA', hidden: false })
   const [sms, setSms] = useState({ phone: '', message: '' })
-  const [caption, setCaption] = useState('')
+  const [captionOverride, setCaptionOverride] = useState<string | null>(null)
+  const [customLogos, setCustomLogos] = useState<string[]>([])
   const [logo, setLogoState] = useState<string | null>(
     options.defaultLogo === undefined ? (logoPresets[0]?.src ?? null) : options.defaultLogo
   )
@@ -107,6 +117,8 @@ export function useQrBuilder(options: UseQrBuilderOptions = {}) {
     }
   }, [tab, url, wifi, sms])
 
+  const caption = captionOverride ?? suggestCaption(content)
+
   const appearance: QrAppearance = useMemo(
     () => ({
       ...baseAppearance,
@@ -140,6 +152,45 @@ export function useQrBuilder(options: UseQrBuilderOptions = {}) {
     setLogoState(src)
     setLogoEnabled(true)
   }, [])
+
+  const customLogosRef = useRef<string[]>([])
+  const [storageWarning, setStorageWarning] = useState(false)
+
+  useEffect(() => {
+    if (!storageKey) return
+    const stored = loadStoredLogos(storageKey, MAX_CUSTOM_LOGOS)
+    customLogosRef.current = stored
+    setCustomLogos(stored)
+  }, [storageKey])
+
+  const commitCustomLogos = useCallback(
+    (next: string[]) => {
+      customLogosRef.current = next
+      setCustomLogos(next)
+      if (storageKey) setStorageWarning(!saveStoredLogos(storageKey, next))
+    },
+    [storageKey]
+  )
+
+  const addCustomLogo = useCallback(
+    (src: string) => {
+      const current = customLogosRef.current
+      if (!current.includes(src)) {
+        if (current.length >= MAX_CUSTOM_LOGOS) return
+        commitCustomLogos([...current, src])
+      }
+      setLogo(src)
+    },
+    [commitCustomLogos, setLogo]
+  )
+
+  const removeCustomLogo = useCallback(
+    (src: string) => {
+      commitCustomLogos(customLogosRef.current.filter((item) => item !== src))
+      setLogoState((selected) => (selected === src ? (logoPresets[0]?.src ?? null) : selected))
+    },
+    [commitCustomLogos, logoPresets]
+  )
 
   const download = useCallback(async () => {
     if (!qr.payload) return
@@ -191,12 +242,17 @@ export function useQrBuilder(options: UseQrBuilderOptions = {}) {
     sms,
     setSms: track(setSms),
     caption,
-    setCaption: track(setCaption),
+    setCaption: track(setCaptionOverride),
     logo,
     logoEnabled,
     setLogo: track(setLogo),
     setLogoEnabled: track(setLogoEnabled),
     logoPresets,
+    customLogos,
+    maxCustomLogos: MAX_CUSTOM_LOGOS,
+    addCustomLogo: track(addCustomLogo),
+    removeCustomLogo,
+    storageWarning,
     content,
     appearance,
     qr,

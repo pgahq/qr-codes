@@ -1,6 +1,8 @@
-import { useId, useRef, useState, type ChangeEvent, type KeyboardEvent, type ReactNode } from 'react'
+import { useCallback, useId, useRef, useState, type ChangeEvent, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react'
 import { CAPTION_MAX_LENGTH } from '../appearance'
-import { SMS_MESSAGE_MAX_LENGTH, normalizeUrl } from '../content'
+import { SMS_MESSAGE_MAX_LENGTH } from '../content'
+import { readLogoFile } from './logoFile'
+import { QrContextMenu } from './QrContextMenu'
 import { QrCode } from './QrCode'
 import { useQrBuilder, type BuilderTab, type QrBuilderState, type UseQrBuilderOptions } from './useQrBuilder'
 
@@ -8,7 +10,8 @@ export interface QrBuilderProps extends UseQrBuilderOptions {
   className?: string
   /**
    * Upload a custom logo and return a https URL (e.g. to Cloudinary).
-   * Default: the image is read locally and embedded as a data URI, so nothing leaves the browser.
+   * Default: the image is shrunk and embedded as a data URI, so nothing leaves the browser.
+   * Uploaded logos (up to 5) are remembered on this device; see `storageKey`.
    */
   onUploadLogo?: (file: File) => Promise<string>
   /** Set false to hide the custom logo upload. */
@@ -36,23 +39,6 @@ const TAB_COPY: Record<BuilderTab, { subtitle: string; description: string }> = 
     subtitle: 'Quickly send a text message:',
     description: "When someone scans the QR code from their phone, it'll pre-fill a text message to the phone number you specify."
   }
-}
-
-const MAX_UPLOAD_BYTES = 1_000_000
-
-function readFileAsDataUri(file: File): Promise<string> {
-  if (!/^image\/(png|jpeg|webp|gif)$/.test(file.type)) {
-    return Promise.reject(new Error('Choose a png, jpeg, webp or gif image.'))
-  }
-  if (file.size > MAX_UPLOAD_BYTES) {
-    return Promise.reject(new Error('Image must be smaller than 1 MB.'))
-  }
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(String(reader.result))
-    reader.onerror = () => reject(new Error('Could not read the image.'))
-    reader.readAsDataURL(file)
-  })
 }
 
 function Field({
@@ -128,35 +114,35 @@ function Tabs({ state, idPrefix }: { state: QrBuilderState; idPrefix: string }) 
   )
 }
 
-function ContentFields({ state, idPrefix }: { state: QrBuilderState; idPrefix: string }) {
+function FieldRow({ children }: { children: ReactNode }) {
+  return <div className="pga-qr-row">{children}</div>
+}
+
+function ContentFields({ state, idPrefix, captionField }: { state: QrBuilderState; idPrefix: string; captionField: ReactNode }) {
   const { tab, qr } = state
   const [touched, setTouched] = useState<Record<string, boolean>>({})
   const touch = (field: string) => setTouched((prev) => ({ ...prev, [field]: true }))
   const errorFor = (field: string) => (qr.error && qr.field === field && (field === 'message' || touched[field]) ? qr.error : null)
 
   if (tab === 'url') {
-    const normalized = state.url.trim() ? normalizeUrl(state.url) : null
     return (
-      <Field
-        id={`${idPrefix}-url`}
-        label="URL"
-        required
-        error={errorFor('url')}
-        hint={normalized && normalized !== state.url.trim() ? `Will open ${normalized}` : null}
-      >
-        <input
-          id={`${idPrefix}-url`}
-          className="pga-qr-input"
-          type="url"
-          inputMode="url"
-          autoComplete="off"
-          placeholder="https://pga.com"
-          value={state.url}
-          aria-describedby={`${idPrefix}-url-msg`}
-          onChange={(event) => state.setUrl(event.target.value)}
-          onBlur={() => touch('url')}
-        />
-      </Field>
+      <FieldRow>
+        <Field id={`${idPrefix}-url`} label="URL" required error={errorFor('url')}>
+          <input
+            id={`${idPrefix}-url`}
+            className="pga-qr-input"
+            type="url"
+            inputMode="url"
+            autoComplete="off"
+            placeholder="https://pga.com"
+            value={state.url}
+            aria-describedby={`${idPrefix}-url-msg`}
+            onChange={(event) => state.setUrl(event.target.value)}
+            onBlur={() => touch('url')}
+          />
+        </Field>
+        {captionField}
+      </FieldRow>
     )
   }
 
@@ -164,49 +150,49 @@ function ContentFields({ state, idPrefix }: { state: QrBuilderState; idPrefix: s
     const { wifi } = state
     return (
       <>
-        <Field id={`${idPrefix}-ssid`} label="Network name" required error={errorFor('ssid')}>
-          <input
-            id={`${idPrefix}-ssid`}
-            className="pga-qr-input"
-            type="text"
-            autoComplete="off"
-            value={wifi.ssid}
-            aria-describedby={`${idPrefix}-ssid-msg`}
-            onChange={(event) => state.setWifi({ ...wifi, ssid: event.target.value })}
-            onBlur={() => touch('ssid')}
-          />
-        </Field>
-        <Field id={`${idPrefix}-security`} label="Network type" required>
-          <select
-            id={`${idPrefix}-security`}
-            className="pga-qr-input"
-            value={wifi.security}
-            onChange={(event) =>
-              state.setWifi({
-                ...wifi,
-                security: event.target.value as typeof wifi.security
-              })
-            }
-          >
-            <option value="WEP">WEP</option>
-            <option value="WPA">WPA/WPA2</option>
-            <option value="nopass">No encryption</option>
-          </select>
-        </Field>
-        {wifi.security !== 'nopass' && (
-          <Field id={`${idPrefix}-password`} label="Password" required error={errorFor('password')}>
+        <FieldRow>
+          <Field id={`${idPrefix}-ssid`} label="Network name" required error={errorFor('ssid')}>
             <input
-              id={`${idPrefix}-password`}
+              id={`${idPrefix}-ssid`}
               className="pga-qr-input"
               type="text"
               autoComplete="off"
-              value={wifi.password}
-              aria-describedby={`${idPrefix}-password-msg`}
-              onChange={(event) => state.setWifi({ ...wifi, password: event.target.value })}
-              onBlur={() => touch('password')}
+              value={wifi.ssid}
+              aria-describedby={`${idPrefix}-ssid-msg`}
+              onChange={(event) => state.setWifi({ ...wifi, ssid: event.target.value })}
+              onBlur={() => touch('ssid')}
             />
           </Field>
-        )}
+          {captionField}
+        </FieldRow>
+        <FieldRow>
+          <Field id={`${idPrefix}-security`} label="Network type" required>
+            <select
+              id={`${idPrefix}-security`}
+              className="pga-qr-input"
+              value={wifi.security}
+              onChange={(event) => state.setWifi({ ...wifi, security: event.target.value as typeof wifi.security })}
+            >
+              <option value="WEP">WEP</option>
+              <option value="WPA">WPA/WPA2</option>
+              <option value="nopass">No encryption</option>
+            </select>
+          </Field>
+          {wifi.security !== 'nopass' && (
+            <Field id={`${idPrefix}-password`} label="Password" required error={errorFor('password')}>
+              <input
+                id={`${idPrefix}-password`}
+                className="pga-qr-input"
+                type="text"
+                autoComplete="off"
+                value={wifi.password}
+                aria-describedby={`${idPrefix}-password-msg`}
+                onChange={(event) => state.setWifi({ ...wifi, password: event.target.value })}
+                onBlur={() => touch('password')}
+              />
+            </Field>
+          )}
+        </FieldRow>
         <label className="pga-qr-check">
           <input type="checkbox" checked={wifi.hidden} onChange={(event) => state.setWifi({ ...wifi, hidden: event.target.checked })} />
           Hidden network
@@ -218,25 +204,28 @@ function ContentFields({ state, idPrefix }: { state: QrBuilderState; idPrefix: s
   const { sms } = state
   return (
     <>
-      <Field
-        id={`${idPrefix}-phone`}
-        label="Your phone number"
-        required
-        error={errorFor('phone')}
-        hint="Include the country code, e.g. +18005551212."
-      >
-        <input
+      <FieldRow>
+        <Field
           id={`${idPrefix}-phone`}
-          className="pga-qr-input"
-          type="tel"
-          autoComplete="off"
-          placeholder="+18005551212"
-          value={sms.phone}
-          aria-describedby={`${idPrefix}-phone-msg`}
-          onChange={(event) => state.setSms({ ...sms, phone: event.target.value })}
-          onBlur={() => touch('phone')}
-        />
-      </Field>
+          label="Your phone number"
+          required
+          error={errorFor('phone')}
+          hint="Include the country code, e.g. +18005551212."
+        >
+          <input
+            id={`${idPrefix}-phone`}
+            className="pga-qr-input"
+            type="tel"
+            autoComplete="off"
+            placeholder="+18005551212"
+            value={sms.phone}
+            aria-describedby={`${idPrefix}-phone-msg`}
+            onChange={(event) => state.setSms({ ...sms, phone: event.target.value })}
+            onBlur={() => touch('phone')}
+          />
+        </Field>
+        {captionField}
+      </FieldRow>
       <Field id={`${idPrefix}-message`} label="Custom message" error={errorFor('message')}>
         <input
           id={`${idPrefix}-message`}
@@ -253,14 +242,30 @@ function ContentFields({ state, idPrefix }: { state: QrBuilderState; idPrefix: s
   )
 }
 
+function NoLogoIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="22"
+      height="22"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="8" />
+      <path d="M6.5 17.5l11-11" />
+    </svg>
+  )
+}
+
 function LogoPicker({
   state,
-  idPrefix,
   allowUpload,
   onUploadLogo
 }: {
   state: QrBuilderState
-  idPrefix: string
   allowUpload: boolean
   onUploadLogo?: (file: File) => Promise<string>
 }) {
@@ -268,7 +273,11 @@ function LogoPicker({
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
 
-  const isPreset = state.logoPresets.some((preset) => preset.src === state.logo)
+  const { logo, logoEnabled, logoPresets, customLogos, maxCustomLogos } = state
+  const atLimit = customLogos.length >= maxCustomLogos
+  const known = [...logoPresets.map((preset) => preset.src), ...customLogos]
+  const otherLogo = logo && !known.includes(logo) ? logo : null
+  const noLogo = !logoEnabled || !logo
 
   const onFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -277,7 +286,7 @@ function LogoPicker({
     setUploadError(null)
     setUploading(true)
     try {
-      state.setLogo(await (onUploadLogo ?? readFileAsDataUri)(file))
+      state.addCustomLogo(await (onUploadLogo ?? readLogoFile)(file))
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : 'Upload failed.')
     } finally {
@@ -285,74 +294,75 @@ function LogoPicker({
     }
   }
 
+  const option = (src: string, label: string, removable: boolean) => (
+    <div className="pga-qr-logo-item" key={src}>
+      <button
+        type="button"
+        role="radio"
+        aria-checked={!noLogo && logo === src}
+        aria-label={label}
+        className="pga-qr-logo-option"
+        onClick={() => state.setLogo(src)}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt="" width={38} height={38} />
+      </button>
+      {removable && (
+        <button
+          type="button"
+          className="pga-qr-logo-remove"
+          aria-label={`Remove ${label.toLowerCase()}`}
+          onClick={() => state.removeCustomLogo(src)}
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+      )}
+    </div>
+  )
+
   return (
     <fieldset className="pga-qr-fieldset">
       <legend className="pga-qr-legend">Logo</legend>
-      <div className="pga-qr-logo-row">
-        <div className="pga-qr-logos" role="radiogroup" aria-label="Logo examples">
-          {state.logoPresets.map((preset) => {
-            const selected = state.logoEnabled && state.logo === preset.src
-            return (
-              <button
-                key={preset.src}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                aria-label={preset.label}
-                className="pga-qr-logo-option"
-                onClick={() => state.setLogo(preset.src)}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={preset.src} alt="" width={38} height={38} />
-              </button>
-            )
-          })}
-          {state.logo && !isPreset && (
-            <button
-              type="button"
-              role="radio"
-              aria-checked={state.logoEnabled}
-              aria-label="Your uploaded logo"
-              className="pga-qr-logo-option"
-              onClick={() => state.setLogo(state.logo!)}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={state.logo} alt="" width={38} height={38} />
-            </button>
-          )}
+      <div className="pga-qr-logos" role="radiogroup" aria-label="Logo">
+        <div className="pga-qr-logo-item">
+          <button
+            type="button"
+            role="radio"
+            aria-checked={noLogo}
+            aria-label="No logo"
+            title="No logo"
+            className="pga-qr-logo-option"
+            onClick={() => state.setLogoEnabled(false)}
+          >
+            <NoLogoIcon />
+          </button>
         </div>
-
+        {logoPresets.map((preset) => option(preset.src, preset.label, false))}
+        {customLogos.map((src, index) => option(src, `Uploaded logo ${index + 1}`, true))}
+        {otherLogo && option(otherLogo, 'Custom logo', false)}
         {allowUpload && (
-          <>
-            <input
-              ref={fileInput}
-              id={`${idPrefix}-logo-file`}
-              type="file"
-              accept="image/png,image/jpeg,image/webp,image/gif"
-              hidden
-              onChange={onFile}
-            />
+          <div className="pga-qr-logo-item">
+            <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden onChange={onFile} />
             <button
               type="button"
-              className="pga-qr-button pga-qr-button-secondary"
-              disabled={uploading}
+              className="pga-qr-logo-option pga-qr-logo-add"
+              aria-label="Upload a custom image"
+              title={atLimit ? `You can keep ${maxCustomLogos} uploaded logos. Remove one to add another.` : 'Upload a custom image'}
+              disabled={uploading || atLimit}
               onClick={() => fileInput.current?.click()}
             >
-              {uploading ? 'Uploading…' : 'Upload a custom image'}
+              <span aria-hidden="true">{uploading ? '\u2026' : '+'}</span>
             </button>
-          </>
-        )}
-        {state.logo && (
-          <label className="pga-qr-check">
-            <input type="checkbox" checked={!state.logoEnabled} onChange={(event) => state.setLogoEnabled(!event.target.checked)} />
-            No logo
-          </label>
+          </div>
         )}
       </div>
       {uploadError && (
         <p className="pga-qr-error" role="alert">
           {uploadError}
         </p>
+      )}
+      {state.storageWarning && (
+        <p className="pga-qr-hint">Your uploaded logos could not be saved for next time (browser storage is unavailable).</p>
       )}
     </fieldset>
   )
@@ -367,6 +377,28 @@ export function QrBuilder({ className, onUploadLogo, allowLogoUpload = true, pla
   const state = useQrBuilder(options)
   const ready = !!state.qr.svg
   const copy = TAB_COPY[state.tab]
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
+  const closeMenu = useCallback(() => setMenu(null), [])
+
+  const onStageContextMenu = (event: MouseEvent<HTMLDivElement>) => {
+    if (!ready) return
+    event.preventDefault()
+    setMenu({ x: event.clientX, y: event.clientY })
+  }
+
+  const captionField = (
+    <Field id={`${idPrefix}-caption`} label="Caption">
+      <input
+        id={`${idPrefix}-caption`}
+        className="pga-qr-input"
+        type="text"
+        maxLength={CAPTION_MAX_LENGTH}
+        placeholder="Shown below the code"
+        value={state.caption}
+        onChange={(event) => state.setCaption(event.target.value)}
+      />
+    </Field>
+  )
 
   return (
     <div className={['pga-qr-builder', className].filter(Boolean).join(' ')}>
@@ -377,28 +409,14 @@ export function QrBuilder({ className, onUploadLogo, allowLogoUpload = true, pla
           <p className="pga-qr-description">
             <strong>{copy.subtitle}</strong> {copy.description}
           </p>
-          <ContentFields key={state.tab} state={state} idPrefix={idPrefix} />
+          <ContentFields key={state.tab} state={state} idPrefix={idPrefix} captionField={captionField} />
         </div>
 
-        {ready && (
-          <>
-            <LogoPicker state={state} idPrefix={idPrefix} allowUpload={allowLogoUpload} onUploadLogo={onUploadLogo} />
-            <Field id={`${idPrefix}-caption`} label="Caption below QR code">
-              <input
-                id={`${idPrefix}-caption`}
-                className="pga-qr-input"
-                type="text"
-                maxLength={CAPTION_MAX_LENGTH}
-                value={state.caption}
-                onChange={(event) => state.setCaption(event.target.value)}
-              />
-            </Field>
-          </>
-        )}
+        <LogoPicker state={state} allowUpload={allowLogoUpload} onUploadLogo={onUploadLogo} />
       </div>
 
       <div className="pga-qr-preview">
-        <div className="pga-qr-stage" aria-live="polite">
+        <div className="pga-qr-stage" aria-live="polite" onContextMenu={onStageContextMenu}>
           {ready ? (
             <QrCode content={state.content} appearance={state.appearance} />
           ) : (
@@ -433,6 +451,19 @@ export function QrBuilder({ className, onUploadLogo, allowLogoUpload = true, pla
           </p>
         )}
       </div>
+
+      {menu && (
+        <QrContextMenu
+          x={menu.x}
+          y={menu.y}
+          label="QR code actions"
+          onClose={closeMenu}
+          items={[
+            ...(state.copySupported ? [{ label: 'Copy image', onSelect: state.copy }] : []),
+            { label: 'Download image', onSelect: state.download }
+          ]}
+        />
+      )}
     </div>
   )
 }

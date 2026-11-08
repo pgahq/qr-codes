@@ -13,12 +13,14 @@ export {
 } from './appearance'
 export {
   SMS_MESSAGE_MAX_LENGTH,
+  SUGGESTED_CAPTION_MAX_LENGTH,
   TEXT_MAX_LENGTH,
   encodeQrContent,
   escapeWifiField,
   normalizePhone,
   normalizePunctuation,
   normalizeUrl,
+  suggestCaption,
   type QrContent,
   type QrContentType,
   type Result,

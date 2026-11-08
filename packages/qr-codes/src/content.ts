@@ -80,6 +80,32 @@ export function normalizeUrl(input: string): string | null {
   return parsed.toString()
 }
 
+export const SUGGESTED_CAPTION_MAX_LENGTH = 40
+
+/**
+ * A short, human-friendly caption for content: "https://www.pga.com/a/b?x=1"
+ * becomes "pga.com/a/b". Long paths are cut with an ellipsis. Returns "" when
+ * there is nothing sensible to suggest.
+ */
+export function suggestCaption(content: QrContent): string {
+  switch (content.type) {
+    case 'url': {
+      const normalized = normalizeUrl(content.url)
+      if (!normalized) return ''
+      const { hostname, pathname } = new URL(normalized)
+      const path = pathname === '/' ? '' : pathname.replace(/\/+$/, '')
+      const label = `${hostname.replace(/^www\./, '')}${path}`
+      return label.length > SUGGESTED_CAPTION_MAX_LENGTH
+        ? `${label.slice(0, SUGGESTED_CAPTION_MAX_LENGTH - 1).trimEnd()}\u2026`
+        : label
+    }
+    case 'wifi':
+      return content.ssid.trim().slice(0, SUGGESTED_CAPTION_MAX_LENGTH)
+    default:
+      return ''
+  }
+}
+
 /** Escapes the characters that are special in the Wi-Fi QR format. */
 export function escapeWifiField(value: string): string {
   return value.replace(/([\\;,:"])/g, '\\$1')

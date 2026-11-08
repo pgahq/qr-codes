@@ -13,10 +13,7 @@ export interface QrSvgState {
 
 const EMPTY: QrSvgState = { payload: null, svg: null, error: null, field: null }
 
-export function renderQrState(
-  content: QrContent | null,
-  appearance: QrAppearance
-): QrSvgState {
+export function renderQrState(content: QrContent | null, appearance: QrAppearance): QrSvgState {
   if (!content) return EMPTY
   const encoded: Result<string> = encodeQrContent(content)
   if (!encoded.ok) {

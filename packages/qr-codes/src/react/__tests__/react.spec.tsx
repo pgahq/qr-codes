@@ -16,6 +16,7 @@ const browser = await import('../../browser')
 
 afterEach(() => {
   cleanup()
+  window.localStorage.clear()
   vi.clearAllMocks()
 })
 
@@ -46,10 +47,16 @@ describe('<QrBuilder />', () => {
     await user.type(input, value)
   }
 
+  const replaceCaption = async (user: ReturnType<typeof userEvent.setup>, value: string) => {
+    const input = screen.getByLabelText('Caption')
+    await user.clear(input)
+    await user.type(input, value)
+  }
+
   it('starts with https://pga.com so a code is ready immediately', () => {
     setup()
     expect((screen.getByLabelText(/^URL/) as HTMLInputElement).value).toBe('https://pga.com')
-    expect(screen.getByRole('img', { name: 'QR code' })).toBeTruthy()
+    expect(screen.getByRole('img', { name: 'pga.com' })).toBeTruthy()
     expect((screen.getByRole('button', { name: 'Download' }) as HTMLButtonElement).disabled).toBe(false)
   })
 
@@ -59,9 +66,9 @@ describe('<QrBuilder />', () => {
     expect((screen.getByRole('button', { name: 'Download' }) as HTMLButtonElement).disabled).toBe(true)
 
     await replaceUrl(user, 'pga.org')
-    expect(screen.getByText('Will open https://pga.org/')).toBeTruthy()
+    expect(screen.queryByText(/Will open/)).toBeNull()
     expect((screen.getByRole('button', { name: 'Download' }) as HTMLButtonElement).disabled).toBe(false)
-    expect(screen.getByRole('img', { name: 'QR code' })).toBeTruthy()
+    expect(screen.getByRole('img', { name: 'pga.org' })).toBeTruthy()
   })
 
   it('only shows validation after the field was touched', async () => {
@@ -89,6 +96,7 @@ describe('<QrBuilder />', () => {
     await user.tab()
     await user.tab()
     await user.tab()
+    await user.tab()
     expect((await screen.findByRole('alert')).textContent).toMatch(/password/i)
     await user.selectOptions(screen.getByLabelText(/^Network type/), 'nopass')
     expect(screen.queryByLabelText(/^Password/)).toBeNull()
@@ -98,7 +106,7 @@ describe('<QrBuilder />', () => {
   it('downloads using the caption as the file name and reports events once', async () => {
     const { user, onEvent } = setup()
     await replaceUrl(user, 'pga.org')
-    await user.type(screen.getByLabelText('Caption below QR code'), 'Tickets')
+    await replaceCaption(user, 'Tickets')
     await user.click(screen.getByRole('button', { name: 'Download' }))
 
     await waitFor(() => expect(browser.downloadQr).toHaveBeenCalledTimes(1))
@@ -116,14 +124,14 @@ describe('<QrBuilder />', () => {
     await replaceUrl(user, 'pga.org')
     await user.click(screen.getByRole('button', { name: 'Copy' }))
     expect(await screen.findByRole('button', { name: 'Copied!' })).toBeTruthy()
-    await user.type(screen.getByLabelText('Caption below QR code'), 'x')
+    await user.type(screen.getByLabelText('Caption'), 'x')
     expect(screen.getByRole('button', { name: 'Copy' })).toBeTruthy()
   })
 
   it('can remove the logo', async () => {
     const { user } = setup()
     await replaceUrl(user, 'pga.org')
-    await user.click(screen.getByLabelText('No logo'))
+    await user.click(screen.getByRole('radio', { name: 'No logo' }))
     await user.click(screen.getByRole('button', { name: 'Download' }))
     await waitFor(() => expect(browser.downloadQr).toHaveBeenCalled())
     expect(vi.mocked(browser.downloadQr).mock.calls[0]![1]!.logo).toBeUndefined()
@@ -144,7 +152,116 @@ describe('<QrBuilder />', () => {
     await replaceUrl(user, 'pga.org')
     const input = document.querySelector('input[type=file]') as HTMLInputElement
     await user.upload(input, new File(['x'], 'logo.png', { type: 'image/png' }))
-    await waitFor(() => expect(screen.getByRole('radio', { name: 'Your uploaded logo' }).getAttribute('aria-checked')).toBe('true'))
+    await waitFor(() => expect(screen.getByRole('radio', { name: 'Uploaded logo 1' }).getAttribute('aria-checked')).toBe('true'))
     expect(onUploadLogo).toHaveBeenCalledTimes(1)
+  })
+
+  it('suggests a caption from the URL until the user writes their own', async () => {
+    const { user } = setup()
+    const caption = screen.getByLabelText('Caption') as HTMLInputElement
+    expect(caption.value).toBe('pga.com')
+
+    await replaceUrl(user, 'https://www.pga.com/championship/')
+    expect(caption.value).toBe('pga.com/championship')
+
+    await replaceCaption(user, 'Scan for tickets')
+    await replaceUrl(user, 'pga.com/other')
+    expect(caption.value).toBe('Scan for tickets')
+  })
+
+  it('puts the caption on the same row as the main field', () => {
+    setup()
+    const row = screen.getByLabelText(/^URL/).closest('.pga-qr-row')
+    expect(row?.contains(screen.getByLabelText('Caption'))).toBe(true)
+  })
+
+  describe('custom logos', () => {
+    const png = (name = 'logo.png') => new File(['x'], name, { type: 'image/png' })
+    const upload = async (user: ReturnType<typeof userEvent.setup>, file = png()) => {
+      await user.upload(document.querySelector('input[type=file]') as HTMLInputElement, file)
+    }
+
+    it('adds, selects, persists and removes uploaded logos', async () => {
+      const { user } = setup()
+      await upload(user)
+      const tile = await screen.findByRole('radio', { name: 'Uploaded logo 1' })
+      expect(tile.getAttribute('aria-checked')).toBe('true')
+
+      const stored = JSON.parse(window.localStorage.getItem('pgahq:qr-codes:custom-logos') ?? '[]')
+      expect(stored).toHaveLength(1)
+      expect(stored[0]).toMatch(/^data:image\/png;base64,/)
+
+      cleanup()
+      setup()
+      expect(await screen.findByRole('radio', { name: 'Uploaded logo 1' })).toBeTruthy()
+
+      await user.click(screen.getByRole('button', { name: 'Remove uploaded logo 1' }))
+      expect(screen.queryByRole('radio', { name: 'Uploaded logo 1' })).toBeNull()
+      expect(JSON.parse(window.localStorage.getItem('pgahq:qr-codes:custom-logos') ?? '[]')).toEqual([])
+    })
+
+    it('falls back to the first preset when the selected upload is removed', async () => {
+      const { user } = setup()
+      await upload(user)
+      await user.click(await screen.findByRole('button', { name: 'Remove uploaded logo 1' }))
+      expect(screen.getAllByRole('radio').filter((r) => r.getAttribute('aria-checked') === 'true')).toHaveLength(1)
+      expect(screen.getByRole('radio', { name: 'PGA of America (blue)' }).getAttribute('aria-checked')).toBe('true')
+    })
+
+    it('allows at most five uploads', async () => {
+      const { user } = setup({ onUploadLogo: (file: File) => Promise.resolve(`https://res.cloudinary.com/pgahq/${file.name}`) })
+      for (let i = 1; i <= 5; i++) await upload(user, png(`logo${i}.png`))
+      await waitFor(() => expect(screen.getAllByRole('button', { name: /^Remove uploaded logo/ })).toHaveLength(5))
+      expect((screen.getByRole('button', { name: 'Upload a custom image' }) as HTMLButtonElement).disabled).toBe(true)
+    })
+
+    it('ignores corrupt or unsafe stored values and can skip storage entirely', async () => {
+      window.localStorage.setItem(
+        'pgahq:qr-codes:custom-logos',
+        JSON.stringify(['javascript:alert(1)', 'http://insecure.test/a.png', 'https://res.cloudinary.com/pgahq/ok.png', 42])
+      )
+      setup()
+      expect(await screen.findByRole('radio', { name: 'Uploaded logo 1' })).toBeTruthy()
+      expect(screen.queryByRole('radio', { name: 'Uploaded logo 2' })).toBeNull()
+
+      cleanup()
+      window.localStorage.setItem('mine', '[]')
+      const { user } = setup({ storageKey: null })
+      expect(screen.queryByRole('radio', { name: 'Uploaded logo 1' })).toBeNull()
+      await upload(user)
+      await screen.findByRole('radio', { name: 'Uploaded logo 1' })
+      expect(window.localStorage.getItem('pgahq:qr-codes:custom-logos')).toContain('ok.png')
+    })
+  })
+
+  describe('right-click menu', () => {
+    it('offers copy and download on the code and runs them', async () => {
+      const { user } = setup()
+      const code = screen.getByRole('img', { name: /QR code|pga\.com/ })
+      await user.pointer({ keys: '[MouseRight]', target: code })
+
+      const menu = await screen.findByRole('menu', { name: 'QR code actions' })
+      expect(menu).toBeTruthy()
+      await user.click(screen.getByRole('menuitem', { name: 'Copy image' }))
+      await waitFor(() => expect(browser.copyQrToClipboard).toHaveBeenCalledTimes(1))
+      expect(screen.queryByRole('menu')).toBeNull()
+
+      await user.pointer({ keys: '[MouseRight]', target: code })
+      await user.click(await screen.findByRole('menuitem', { name: 'Download image' }))
+      await waitFor(() => expect(browser.downloadQr).toHaveBeenCalledTimes(1))
+    })
+
+    it('closes on Escape and is not offered before there is a code', async () => {
+      const { user } = setup()
+      await user.pointer({ keys: '[MouseRight]', target: screen.getByRole('img', { name: /QR code|pga\.com/ }) })
+      await screen.findByRole('menu')
+      await user.keyboard('{Escape}')
+      expect(screen.queryByRole('menu')).toBeNull()
+
+      cleanup()
+      setup({ defaultUrl: '' })
+      await user.pointer({ keys: '[MouseRight]', target: screen.getByText('Your QR code will appear here') })
+      expect(screen.queryByRole('menu')).toBeNull()
+    })
   })
 })

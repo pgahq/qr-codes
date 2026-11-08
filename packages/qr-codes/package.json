@@ -81,13 +81,17 @@
   },
   "peerDependencies": {
     "@resvg/resvg-js": "^2.6.2",
-    "react": ">=18"
+    "react": ">=18",
+    "react-dom": ">=18"
   },
   "peerDependenciesMeta": {
     "@resvg/resvg-js": {
       "optional": true
     },
     "react": {
+      "optional": true
+    },
+    "react-dom": {
       "optional": true
     }
   },
