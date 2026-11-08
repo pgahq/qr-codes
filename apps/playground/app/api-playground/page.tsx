@@ -37,7 +37,7 @@ const initial: Form = {
   text: 'PGA of America',
   format: 'svg',
   size: '512',
-  fg: '#00234b',
+  fg: '#00205B',
   bg: '#ffffff',
   dotStyle: 'square',
   cornerStyle: 'square',

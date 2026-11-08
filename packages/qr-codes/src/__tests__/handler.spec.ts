@@ -99,7 +99,7 @@ describe('createQrHandler', () => {
 
 describe('parseQrRequest', () => {
   it('accepts colors without a leading #', () => {
-    const result = parseQrRequest({ url: 'pga.org', fg: '00234b', bg: 'fff' })
-    expect(result).toMatchObject({ ok: true, value: { appearance: { foreground: '#00234b', background: '#fff' } } })
+    const result = parseQrRequest({ url: 'pga.org', fg: '00205B', bg: 'fff' })
+    expect(result).toMatchObject({ ok: true, value: { appearance: { foreground: '#00205B', background: '#fff' } } })
   })
 })

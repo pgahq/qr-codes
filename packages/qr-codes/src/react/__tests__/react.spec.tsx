@@ -40,12 +40,25 @@ describe('<QrBuilder />', () => {
     return { user, onEvent }
   }
 
+  const replaceUrl = async (user: ReturnType<typeof userEvent.setup>, value: string) => {
+    const input = screen.getByLabelText(/^URL/)
+    await user.clear(input)
+    await user.type(input, value)
+  }
+
+  it('starts with https://pga.com so a code is ready immediately', () => {
+    setup()
+    expect((screen.getByLabelText(/^URL/) as HTMLInputElement).value).toBe('https://pga.com')
+    expect(screen.getByRole('img', { name: 'QR code' })).toBeTruthy()
+    expect((screen.getByRole('button', { name: 'Download' }) as HTMLButtonElement).disabled).toBe(false)
+  })
+
   it('shows a placeholder and disables actions until the content is valid', async () => {
-    const { user } = setup()
+    const { user } = setup({ defaultUrl: '' })
     expect(screen.getByText('Your QR code will appear here')).toBeTruthy()
     expect((screen.getByRole('button', { name: 'Download' }) as HTMLButtonElement).disabled).toBe(true)
 
-    await user.type(screen.getByLabelText(/^URL/), 'pga.org')
+    await replaceUrl(user, 'pga.org')
     expect(screen.getByText('Will open https://pga.org/')).toBeTruthy()
     expect((screen.getByRole('button', { name: 'Download' }) as HTMLButtonElement).disabled).toBe(false)
     expect(screen.getByRole('img', { name: 'QR code' })).toBeTruthy()
@@ -54,6 +67,7 @@ describe('<QrBuilder />', () => {
   it('only shows validation after the field was touched', async () => {
     const { user } = setup()
     const input = screen.getByLabelText(/^URL/)
+    await user.clear(input)
     await user.type(input, 'not a url')
     expect(screen.queryByRole('alert')).toBeNull()
     await user.tab()
@@ -83,7 +97,7 @@ describe('<QrBuilder />', () => {
 
   it('downloads using the caption as the file name and reports events once', async () => {
     const { user, onEvent } = setup()
-    await user.type(screen.getByLabelText(/^URL/), 'pga.org')
+    await replaceUrl(user, 'pga.org')
     await user.type(screen.getByLabelText('Caption below QR code'), 'Tickets')
     await user.click(screen.getByRole('button', { name: 'Download' }))
 
@@ -99,7 +113,7 @@ describe('<QrBuilder />', () => {
 
   it('copies, then resets the copied state when the code changes', async () => {
     const { user } = setup()
-    await user.type(screen.getByLabelText(/^URL/), 'pga.org')
+    await replaceUrl(user, 'pga.org')
     await user.click(screen.getByRole('button', { name: 'Copy' }))
     expect(await screen.findByRole('button', { name: 'Copied!' })).toBeTruthy()
     await user.type(screen.getByLabelText('Caption below QR code'), 'x')
@@ -108,7 +122,7 @@ describe('<QrBuilder />', () => {
 
   it('can remove the logo', async () => {
     const { user } = setup()
-    await user.type(screen.getByLabelText(/^URL/), 'pga.org')
+    await replaceUrl(user, 'pga.org')
     await user.click(screen.getByLabelText('No logo'))
     await user.click(screen.getByRole('button', { name: 'Download' }))
     await waitFor(() => expect(browser.downloadQr).toHaveBeenCalled())
@@ -117,7 +131,7 @@ describe('<QrBuilder />', () => {
 
   it('rejects oversized or non-image uploads with a message', async () => {
     const { user } = setup()
-    await user.type(screen.getByLabelText(/^URL/), 'pga.org')
+    await replaceUrl(user, 'pga.org')
     const input = document.querySelector('input[type=file]') as HTMLInputElement
     // Browsers filter by `accept`, but drag-and-drop and some pickers do not, so the component must check too.
     await userEvent.setup({ applyAccept: false }).upload(input, new File(['x'], 'notes.txt', { type: 'text/plain' }))
@@ -127,7 +141,7 @@ describe('<QrBuilder />', () => {
   it('uses onUploadLogo for custom logos', async () => {
     const onUploadLogo = vi.fn(async () => 'https://res.cloudinary.com/pgahq/custom.png')
     const { user } = setup({ onUploadLogo })
-    await user.type(screen.getByLabelText(/^URL/), 'pga.org')
+    await replaceUrl(user, 'pga.org')
     const input = document.querySelector('input[type=file]') as HTMLInputElement
     await user.upload(input, new File(['x'], 'logo.png', { type: 'image/png' }))
     await waitFor(() => expect(screen.getByRole('radio', { name: 'Your uploaded logo' }).getAttribute('aria-checked')).toBe('true'))

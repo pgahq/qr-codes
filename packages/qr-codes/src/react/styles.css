@@ -1,11 +1,15 @@
 /* @pgahq/qr-codes styles. Override the custom properties on .pga-qr-builder / .pga-qr-code to theme. */
 .pga-qr-builder {
-  --pga-qr-navy: #00234b;
-  --pga-qr-text: #1b2733;
-  --pga-qr-muted: #5b6b7d;
-  --pga-qr-border: #c5ced8;
+  --pga-qr-navy: #00205b;
+  --pga-qr-blue: #0053ff;
+  --pga-qr-birdie: #b9cbd3;
+  --pga-qr-silver: #f1f1f1;
+  --pga-qr-graphite: #63666a;
+  --pga-qr-text: #00205b;
+  --pga-qr-muted: var(--pga-qr-graphite);
+  --pga-qr-border: var(--pga-qr-birdie);
   --pga-qr-danger: #b42318;
-  --pga-qr-focus: #1a73e8;
+  --pga-qr-focus: var(--pga-qr-blue);
   --pga-qr-radius: 6px;
 
   display: grid;
@@ -33,7 +37,11 @@
 
 .pga-qr-tabs {
   display: flex;
-  background: var(--pga-qr-navy);
+  gap: 4px;
+  padding: 4px;
+  background: var(--pga-qr-silver);
+  border: 1px solid var(--pga-qr-birdie);
+  border-radius: 10px;
 }
 
 .pga-qr-tab {
@@ -42,21 +50,26 @@
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 12px 8px;
+  padding: 10px 8px;
   border: 0;
-  border-bottom: 3px solid transparent;
+  border-radius: 7px;
   background: transparent;
-  color: #fff;
+  color: var(--pga-qr-graphite);
   font: inherit;
   cursor: pointer;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  opacity: 0.75;
+  letter-spacing: 0.06em;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.pga-qr-tab:hover:not([aria-selected='true']) {
+  background: rgb(185 203 211 / 0.45);
+  color: var(--pga-qr-navy);
 }
 
 .pga-qr-tab[aria-selected='true'] {
-  opacity: 1;
-  border-bottom-color: #c5a14a;
+  background: var(--pga-qr-navy);
+  color: #fff;
 }
 
 .pga-qr-tab-label {
@@ -66,7 +79,7 @@
 
 .pga-qr-tab-title {
   font-size: 0.6875rem;
-  opacity: 0.8;
+  opacity: 0.75;
 }
 
 .pga-qr-subtitle {
@@ -89,7 +102,7 @@
 
 .pga-qr-label,
 .pga-qr-legend {
-  color: #46576a;
+  color: var(--pga-qr-navy);
   font-size: 0.875rem;
   font-weight: 600;
 }
@@ -186,8 +199,8 @@
 }
 
 .pga-qr-button:hover:not(:disabled) {
-  background: #4f565c;
-  border-color: #4f565c;
+  background: var(--pga-qr-blue);
+  border-color: var(--pga-qr-blue);
 }
 
 .pga-qr-button:disabled {
@@ -198,9 +211,14 @@
 .pga-qr-button-secondary {
   background: transparent;
   color: var(--pga-qr-navy);
-  border-color: #494e5b;
+  border-color: var(--pga-qr-navy);
   flex: none;
   align-self: flex-start;
+}
+
+.pga-qr-button-secondary:hover:not(:disabled) {
+  background: var(--pga-qr-silver);
+  border-color: var(--pga-qr-navy);
 }
 
 .pga-qr-stage {
@@ -233,7 +251,7 @@
   gap: 12px;
   width: 100%;
   aspect-ratio: 1 / 1;
-  border: 1px solid var(--pga-qr-text);
+  border: 1px solid var(--pga-qr-birdie);
   border-radius: 28px;
   color: var(--pga-qr-muted);
   text-align: center;

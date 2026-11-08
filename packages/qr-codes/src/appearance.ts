@@ -31,7 +31,7 @@ export interface QrAppearance {
   title?: string
 }
 
-export const PGA_NAVY = '#00234b'
+export const PGA_NAVY = '#00205B'
 
 export const DEFAULT_APPEARANCE = {
   size: 1024,

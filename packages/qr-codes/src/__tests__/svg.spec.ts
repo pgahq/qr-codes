@@ -36,7 +36,7 @@ describe('renderQrSvg', () => {
     ['sms', { type: 'sms', phone: '+18005551212', message: 'Hi' }, 'smsto:+18005551212:Hi'],
     ['rounded dots', { type: 'url', url: 'pga.org' }, 'https://pga.org/', { dotStyle: 'rounded', cornerStyle: 'rounded' }],
     ['round dots', { type: 'url', url: 'pga.org' }, 'https://pga.org/', { dotStyle: 'dots', cornerStyle: 'dot' }],
-    ['brand colors', { type: 'url', url: 'pga.org' }, 'https://pga.org/', { foreground: '#00234b', background: '#fff', cornerSquareColor: '#000' }],
+    ['brand colors', { type: 'url', url: 'pga.org' }, 'https://pga.org/', { foreground: '#00205B', background: '#fff', cornerSquareColor: '#000' }],
     ['caption', { type: 'url', url: 'pga.org' }, 'https://pga.org/', { caption: 'Scan to visit the PGA' }],
     ['logo', { type: 'url', url: 'https://www.pga.org/championship' }, 'https://www.pga.org/championship', { logo: { src: PIXEL } }]
   ]

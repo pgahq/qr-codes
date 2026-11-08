@@ -54,7 +54,7 @@ const num = (value: number) => String(Math.round(value * 1000) / 1000)
 
 function color(value: string, field: string): string {
   if (!HEX_COLOR.test(value)) {
-    throw new QrRenderError(`${field} must be a hex color like #00234b.`, field)
+    throw new QrRenderError(`${field} must be a hex color like #00205B.`, field)
   }
   return value
 }

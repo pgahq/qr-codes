@@ -48,7 +48,7 @@ export const POST = handler
 
 ```bash
 # GET: for <img src> and links
-curl -o qr.png 'https://example.com/api/qr?url=pga.org&format=png&logo=blue&caption=Scan%20me&fg=00234b'
+curl -o qr.png 'https://example.com/api/qr?url=pga.org&format=png&logo=blue&caption=Scan%20me&fg=00205B'
 
 # POST: same fields as JSON; use it for secrets (URLs end up in logs and caches)
 curl -X POST https://example.com/api/qr -H 'content-type: application/json' \
@@ -91,7 +91,7 @@ Errors are JSON: `400` for malformed requests, `422` for content or logo problem
 import '@pgahq/qr-codes/styles.css'
 import { QrBuilder, QrCode } from '@pgahq/qr-codes/react'
 
-<QrBuilder appearance={{ foreground: '#00234b' }} onEvent={(event) => track(event)} />
+<QrBuilder appearance={{ foreground: '#00205B' }} onEvent={(event) => track(event)} />
 
 <QrCode content={{ type: 'url', url: 'pga.org' }} appearance={{ caption: 'Scan me', size: 512 }} />
 ```
@@ -108,7 +108,7 @@ import { renderQrSvg, encodeQrContent } from '@pgahq/qr-codes'
 
 const svg = renderQrSvg(
   { type: 'wifi', ssid: 'Club House', password: 'fairway123' },
-  { foreground: '#00234b', dotStyle: 'rounded', cornerStyle: 'rounded', caption: 'Guest Wi-Fi' }
+  { foreground: '#00205B', dotStyle: 'rounded', cornerStyle: 'rounded', caption: 'Guest Wi-Fi' }
 )
 ```
 

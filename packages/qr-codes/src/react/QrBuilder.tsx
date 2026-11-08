@@ -157,7 +157,7 @@ function ContentFields({ state, idPrefix }: { state: QrBuilderState; idPrefix: s
           type="url"
           inputMode="url"
           autoComplete="off"
-          placeholder="https://www.pga.org"
+          placeholder="https://pga.com"
           value={state.url}
           aria-describedby={`${idPrefix}-url-msg`}
           onChange={(event) => state.setUrl(event.target.value)}

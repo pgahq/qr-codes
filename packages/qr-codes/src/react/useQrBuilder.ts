@@ -21,6 +21,8 @@ export interface QrBuilderEvent {
 
 export interface UseQrBuilderOptions {
   defaultTab?: BuilderTab
+  /** URL prefilled on the URL tab. Default: https://pga.com */
+  defaultUrl?: string
   /** Base styling (colors, dot/corner styles, size). Logo and caption are managed by the builder. */
   appearance?: QrAppearance
   logoPresets?: readonly LogoPreset[]
@@ -30,6 +32,8 @@ export interface UseQrBuilderOptions {
   filename?: string
   onEvent?: (event: QrBuilderEvent) => void
 }
+
+export const DEFAULT_URL = 'https://pga.com'
 
 export const DEFAULT_LOGO_PRESETS: readonly LogoPreset[] = [
   { label: PGA_LOGOS.blue.label, src: PGA_LOGOS.blue.src },
@@ -48,6 +52,7 @@ const COPY_FEEDBACK_MS = 2_500
 export function useQrBuilder(options: UseQrBuilderOptions = {}) {
   const {
     defaultTab = 'url',
+    defaultUrl = DEFAULT_URL,
     appearance: baseAppearance,
     logoPresets = DEFAULT_LOGO_PRESETS,
     filename = 'PGA-qr-code',
@@ -55,7 +60,7 @@ export function useQrBuilder(options: UseQrBuilderOptions = {}) {
   } = options
 
   const [tab, setTabState] = useState<BuilderTab>(defaultTab)
-  const [url, setUrl] = useState('')
+  const [url, setUrl] = useState(defaultUrl)
   const [wifi, setWifi] = useState<{
     ssid: string
     password: string
