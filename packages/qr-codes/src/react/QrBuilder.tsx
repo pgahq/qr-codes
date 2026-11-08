@@ -34,7 +34,7 @@ export interface QrBuilderProps extends UseQrBuilderOptions {
   placeholder?: ReactNode
   /**
    * Optional link behind a "Link" button under the code (for example a URL for the generated image).
-   * Pass a function to build it from the current state; return nothing to hide the button.
+   * Pass a function to build it from the current state; return nothing to disable the button.
    */
   link?: string | ((state: QrBuilderState) => string | null | undefined)
   /** Text on the link button. Default: "Link". */
@@ -580,6 +580,7 @@ export function QrBuilder({
     setCopiedUrl(linkUrl)
     await state.copyLink(linkUrl)
   }
+  const disabledHint = 'Enter a valid value to enable'
   const copyBusy = state.copyStatus === 'working'
   const announcement = state.copyStatus === 'done' ? 'Image copied' : linkCopied ? `${linkLabel} copied` : ''
 
@@ -634,6 +635,7 @@ export function QrBuilder({
             aria-haspopup="menu"
             aria-expanded={menu?.kind === 'download'}
             data-pga-qr-menu-trigger=""
+            title={ready ? undefined : disabledHint}
             disabled={!ready || state.downloadStatus === 'working'}
             onClick={(event) => toggleFormatMenu(event, 'download')}
           >
@@ -647,18 +649,20 @@ export function QrBuilder({
             aria-haspopup="menu"
             aria-expanded={menu?.kind === 'copy'}
             data-pga-qr-menu-trigger=""
+            title={ready ? undefined : disabledHint}
             disabled={!ready || copyBusy}
             onClick={(event) => toggleFormatMenu(event, 'copy')}
           >
             {state.copyStatus === 'done' ? <CheckIcon /> : <CopyIcon />}
             <span aria-hidden="true">{state.copyStatus === 'done' ? 'Copied!' : 'Image'}</span>
           </button>
-          {linkUrl && (
+          {link !== undefined && (
             <button
               type="button"
               className="pga-qr-button pga-qr-button-secondary pga-qr-action"
               aria-label={`Copy ${linkLabel.toLowerCase()}`}
-              title={linkUrl}
+              title={linkUrl ?? disabledHint}
+              disabled={!linkUrl}
               onClick={copyLink}
             >
               {linkCopied ? <CheckIcon /> : <CopyIcon />}

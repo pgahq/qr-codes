@@ -422,14 +422,15 @@ describe('<QrBuilder />', () => {
       expect(onEvent.mock.calls.map(([event]) => event.type)).toContain('copy-link')
     })
 
-    it('can be built from the builder state, renamed, and hidden when empty', async () => {
+    it('can be built from the builder state, renamed, and disabled when empty', async () => {
       const { user } = setup({
         link: (state: { qr: { payload: string | null } }) => (state.qr.payload ? `https://img.test/?u=${state.qr.payload}` : null),
         linkLabel: 'Image link'
       })
-      expect(screen.queryByRole('button', { name: 'Copy image link' })).toBeNull()
+      expect((screen.getByRole('button', { name: 'Copy image link' }) as HTMLButtonElement).disabled).toBe(true)
       await replaceUrl(user, 'pga.com')
       const button = screen.getByRole('button', { name: 'Copy image link' })
+      expect((button as HTMLButtonElement).disabled).toBe(false)
       expect(button.textContent).toBe('Image link')
       await user.click(button)
       await waitFor(() => expect(browser.copyTextToClipboard).toHaveBeenCalledWith('https://img.test/?u=https://pga.com/'))
