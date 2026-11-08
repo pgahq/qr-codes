@@ -22,6 +22,20 @@ npm install @resvg/resvg-js
 
 For a repo that installs it in CI, grant that repo access under the package's "Manage Actions access" settings, or use a token that can read it.
 
+### Install from git over SSH (no registry token)
+
+Every release also gets a `git-v<version>` tag whose root is the built package (`dist/` included, named `@pgahq/qr-codes`), so it installs like any other private git dependency:
+
+```bash
+bun add git+ssh://git@github.com/pgahq/qr-codes#git-v0.1.5
+# or
+npm install git+ssh://git@github.com/pgahq/qr-codes#git-v0.1.5
+```
+
+This needs SSH access to `github.com/pgahq/qr-codes`: a developer's own key, or a read-only deploy key on this repo for CI (Settings > Deploy keys; load the private half into the CI job's SSH agent). Pin a `git-v<version>` tag or the commit it resolves to. Do not pin `v<version>` or a branch: those contain the monorepo source and no `dist/`, and a git install does not build.
+
+The `git-v` tag installs the same files as the registry package (same exports, dependencies and peer dependencies, so `react` and `react-dom` stay peers and `@resvg/resvg-js` stays optional). It only lacks `scripts` and `devDependencies`, so nothing is built or pulled in at install time.
+
 ## Entry points
 
 | Import | Runs in | What it has |
@@ -153,4 +167,8 @@ The package is published as a private package to GitHub Packages by `.github/wor
    git tag v0.2.0 && git push origin v0.2.0
    ```
 
-The workflow checks that the tag matches the package version, runs typecheck, tests and build, then publishes with the workflow's `GITHUB_TOKEN`. Running the workflow manually from a branch only does a dry run. Published versions cannot be overwritten, so a bad release needs a new version.
+The workflow checks that the tag matches the package version, runs typecheck, tests and build, then pushes the `git-v<version>` tag for SSH installs (`scripts/git-release.mjs`; it is skipped if that tag already exists), then publishes with the workflow's `GITHUB_TOKEN`. Running the workflow manually from a branch only does a dry run. Published versions cannot be overwritten, so a bad release needs a new version.
+
+### How the `git-v<version>` tag is made
+
+The repo root is a private monorepo and `dist/` is never committed, and Bun and npm cannot install a subfolder of a git repo. `scripts/git-release.mjs` therefore commits a second tree made only of the built package: `dist/`, the README and a `package.json` copied from `packages/qr-codes` without `scripts`, `devDependencies` and `publishConfig`. Its parent is the source commit (`v<version>`), and the source layout is unchanged. To try it locally after `npm run build`: `node scripts/git-release.mjs` (local tag only; add `--push` to push it).

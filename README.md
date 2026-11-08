@@ -12,4 +12,4 @@ npm ci
 npm run dev   # http://localhost:3100
 ```
 
-CI (`.github/workflows/ci.yml`) typechecks, tests and builds on every PR. Pushing a `v<version>` tag publishes the package (`.github/workflows/publish.yml`).
+CI (`.github/workflows/ci.yml`) typechecks, tests and builds on every PR. Pushing a `v<version>` tag publishes the package (`.github/workflows/publish.yml`) and also creates a `git-v<version>` tag that installs over SSH with no registry token (see the package README).
