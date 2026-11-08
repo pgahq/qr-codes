@@ -1,10 +1,11 @@
-import { useCallback, useId, useRef, useState, type ChangeEvent, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react'
+import { useCallback, useId, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react'
 import { CAPTION_MAX_LENGTH } from '../appearance'
 import { SMS_MESSAGE_MAX_LENGTH } from '../content'
+import { renderQrSvg } from '../svg'
 import { readLogoFile } from './logoFile'
 import { QrContextMenu } from './QrContextMenu'
 import { QrCode } from './QrCode'
-import { useQrBuilder, type BuilderTab, type QrBuilderState, type UseQrBuilderOptions } from './useQrBuilder'
+import { QR_COLORS, QR_STYLES, useQrBuilder, type BuilderTab, type QrBuilderState, type UseQrBuilderOptions } from './useQrBuilder'
 
 export interface QrBuilderProps extends UseQrBuilderOptions {
   className?: string
@@ -359,6 +360,72 @@ function LogoPicker({
   )
 }
 
+const PREVIEW_SAMPLE = 'https://pga.com'
+
+const toDataUri = (svg: string) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+
+function previewFor(payload: string, style: (typeof QR_STYLES)[number], foreground: string): string {
+  const appearance = { size: 64, margin: 0, foreground, dotStyle: style.dotStyle, cornerStyle: style.cornerStyle } as const
+  try {
+    return toDataUri(renderQrSvg(payload, appearance))
+  } catch {
+    return toDataUri(renderQrSvg(PREVIEW_SAMPLE, appearance))
+  }
+}
+
+function StylePicker({ state }: { state: QrBuilderState }) {
+  const color = QR_COLORS.find((item) => item.id === state.colorId)?.value ?? QR_COLORS[0].value
+  const payload = state.qr.payload ?? PREVIEW_SAMPLE
+
+  // Tiles show the user's own content, so each one is a true miniature of the final code.
+  const previews = useMemo(() => QR_STYLES.map((style) => previewFor(payload, style, color)), [payload, color])
+
+  return (
+    <div className="pga-qr-appearance">
+      <fieldset className="pga-qr-fieldset">
+        <legend className="pga-qr-legend">Style</legend>
+        <div className="pga-qr-logos" role="radiogroup" aria-label="Style">
+          {QR_STYLES.map((style, index) => (
+            <button
+              key={style.id}
+              type="button"
+              role="radio"
+              aria-checked={state.styleId === style.id}
+              aria-label={style.label}
+              title={style.label}
+              className="pga-qr-logo-option pga-qr-style-option"
+              onClick={() => state.setStyleId(style.id)}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={previews[index]} alt="" width={40} height={40} />
+            </button>
+          ))}
+        </div>
+      </fieldset>
+
+      <fieldset className="pga-qr-fieldset">
+        <legend className="pga-qr-legend">Color</legend>
+        <div className="pga-qr-logos" role="radiogroup" aria-label="Color">
+          {QR_COLORS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              role="radio"
+              aria-checked={state.colorId === item.id}
+              aria-label={item.label}
+              title={item.label}
+              className="pga-qr-logo-option"
+              onClick={() => state.setColorId(item.id)}
+            >
+              <span className="pga-qr-swatch" style={{ background: item.value }} aria-hidden="true" />
+            </button>
+          ))}
+        </div>
+      </fieldset>
+    </div>
+  )
+}
+
 /**
  * Full QR builder: choose a type (URL, Wi-Fi, SMS), add a logo and caption,
  * preview, then download or copy. Import `@pgahq/qr-codes/styles.css` once.
@@ -401,6 +468,7 @@ export function QrBuilder({ className, onUploadLogo, allowLogoUpload = true, pla
         </div>
 
         <LogoPicker state={state} allowUpload={allowLogoUpload} onUploadLogo={onUploadLogo} />
+        <StylePicker state={state} />
       </div>
 
       <div className="pga-qr-preview">

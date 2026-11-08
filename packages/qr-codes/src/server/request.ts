@@ -93,10 +93,10 @@ export function parseQrRequest(params: Params, options: ParseOptions = {}): Resu
   const format = oneOf<QrFormat>(str(params, 'format'), ['svg', 'png'])
   if (format === null) return fail('format must be svg or png.', 'format')
 
-  const dotStyle = oneOf<DotStyle>(str(params, 'dotStyle'), ['square', 'rounded', 'dots'])
-  if (dotStyle === null) return fail('dotStyle must be square, rounded or dots.', 'dotStyle')
-  const cornerStyle = oneOf<CornerStyle>(str(params, 'cornerStyle'), ['square', 'rounded', 'dot'])
-  if (cornerStyle === null) return fail('cornerStyle must be square, rounded or dot.', 'cornerStyle')
+  const dotStyle = oneOf<DotStyle>(str(params, 'dotStyle'), ['square', 'rounded', 'dots', 'fluid'])
+  if (dotStyle === null) return fail('dotStyle must be square, rounded, dots or fluid.', 'dotStyle')
+  const cornerStyle = oneOf<CornerStyle>(str(params, 'cornerStyle'), ['square', 'rounded', 'dot', 'fluid'])
+  if (cornerStyle === null) return fail('cornerStyle must be square, rounded, dot or fluid.', 'cornerStyle')
   const errorCorrection = oneOf<ErrorCorrection>(str(params, 'errorCorrection'), ['L', 'M', 'Q', 'H'])
   if (errorCorrection === null) return fail('errorCorrection must be L, M, Q or H.', 'errorCorrection')
 

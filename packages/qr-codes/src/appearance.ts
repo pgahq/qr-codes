@@ -1,5 +1,7 @@
-export type DotStyle = 'square' | 'rounded' | 'dots'
-export type CornerStyle = 'square' | 'rounded' | 'dot'
+/** `fluid` joins neighbouring modules into soft shapes; isolated modules become circles. */
+export type DotStyle = 'square' | 'rounded' | 'dots' | 'fluid'
+/** `fluid` is a rounded-square ring around a round centre. */
+export type CornerStyle = 'square' | 'rounded' | 'dot' | 'fluid'
 export type ErrorCorrection = 'L' | 'M' | 'Q' | 'H'
 
 export interface QrLogo {

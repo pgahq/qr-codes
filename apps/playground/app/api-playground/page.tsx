@@ -187,8 +187,8 @@ export default function ApiPlayground() {
             {text('size', 'Size (px)', 'number')}
             {text('fg', 'Foreground', 'color')}
             {text('bg', 'Background', 'color')}
-            {select('dotStyle', 'Dot style', ['square', 'rounded', 'dots'])}
-            {select('cornerStyle', 'Corner style', ['square', 'rounded', 'dot'])}
+            {select('dotStyle', 'Dot style', ['square', 'rounded', 'dots', 'fluid'])}
+            {select('cornerStyle', 'Corner style', ['square', 'rounded', 'dot', 'fluid'])}
             {select('logo', 'Logo preset', ['', 'blue', 'circle'])}
             {text('caption', 'Caption')}
           </div>

@@ -7,7 +7,11 @@ import {
   type DotStyle,
   type QrAppearance
 } from './appearance'
-import { encodeQrContent, normalizePunctuation, type QrContent } from './content'
+import {
+  encodeQrContent,
+  normalizePunctuation,
+  type QrContent
+} from './content'
 
 export class QrRenderError extends Error {
   readonly field?: string
@@ -59,7 +63,7 @@ function color(value: string, field: string): string {
   return value
 }
 
-function dotPath(style: DotStyle, x: number, y: number): string {
+function dotPath(style: Exclude<DotStyle, 'fluid'>, x: number, y: number): string {
   switch (style) {
     case 'dots': {
       const r = 0.45
@@ -75,6 +79,34 @@ function dotPath(style: DotStyle, x: number, y: number): string {
   }
 }
 
+function fluidPath(
+  x: number,
+  y: number,
+  up: boolean,
+  right: boolean,
+  down: boolean,
+  left: boolean
+): string {
+  const r = 0.5
+  const tl = !up && !left
+  const tr = !up && !right
+  const br = !down && !right
+  const bl = !down && !left
+  const c = (on: boolean) => (on ? r : 0)
+  return (
+    `M${num(x + c(tl))} ${num(y)}` +
+    `h${num(1 - c(tl) - c(tr))}` +
+    (tr ? `a${r} ${r} 0 0 1 ${r} ${r}` : '') +
+    `v${num(1 - c(tr) - c(br))}` +
+    (br ? `a${r} ${r} 0 0 1 ${-r} ${r}` : '') +
+    `h${num(-(1 - c(br) - c(bl)))}` +
+    (bl ? `a${r} ${r} 0 0 1 ${-r} ${-r}` : '') +
+    `v${num(-(1 - c(bl) - c(tl)))}` +
+    (tl ? `a${r} ${r} 0 0 1 ${r} ${-r}` : '') +
+    'z'
+  )
+}
+
 function eyeMarkup(
   style: CornerStyle,
   x: number,
@@ -85,12 +117,14 @@ function eyeMarkup(
   const ring =
     style === 'dot'
       ? `<circle cx="${x + 3.5}" cy="${y + 3.5}" r="3" fill="none" stroke="${squareColor}" stroke-width="1"/>`
-      : style === 'rounded'
-        ? `<rect x="${x + 0.5}" y="${y + 0.5}" width="6" height="6" rx="1.75" fill="none" stroke="${squareColor}" stroke-width="1"/>`
-        : `<path d="M${x} ${y}h7v7h-7zM${x + 1} ${y + 1}v5h5v-5z" fill="${squareColor}" fill-rule="evenodd"/>`
+      : style === 'fluid'
+        ? `<rect x="${x + 0.5}" y="${y + 0.5}" width="6" height="6" rx="2" fill="none" stroke="${squareColor}" stroke-width="1"/>`
+        : style === 'rounded'
+          ? `<rect x="${x + 0.5}" y="${y + 0.5}" width="6" height="6" rx="1.75" fill="none" stroke="${squareColor}" stroke-width="1"/>`
+          : `<path d="M${x} ${y}h7v7h-7zM${x + 1} ${y + 1}v5h5v-5z" fill="${squareColor}" fill-rule="evenodd"/>`
 
   const pupil =
-    style === 'dot'
+    style === 'dot' || style === 'fluid'
       ? `<circle cx="${x + 3.5}" cy="${y + 3.5}" r="1.5" fill="${dotColor}"/>`
       : style === 'rounded'
         ? `<rect x="${x + 2}" y="${y + 2}" width="3" height="3" rx="0.8" fill="${dotColor}"/>`
@@ -136,7 +170,10 @@ export function renderQrSvg(
     )
   }
   if (options.margin < 0 || options.margin > 20) {
-    throw new QrRenderError('margin must be between 0 and 20 modules.', 'margin')
+    throw new QrRenderError(
+      'margin must be between 0 and 20 modules.',
+      'margin'
+    )
   }
   const caption = normalizePunctuation(options.caption?.trim() ?? '')
   if (caption.length > CAPTION_MAX_LENGTH) {
@@ -148,8 +185,14 @@ export function renderQrSvg(
 
   const foreground = color(options.foreground, 'foreground')
   const background = color(options.background, 'background')
-  const cornerSquare = color(options.cornerSquareColor ?? foreground, 'cornerSquareColor')
-  const cornerDot = color(options.cornerDotColor ?? foreground, 'cornerDotColor')
+  const cornerSquare = color(
+    options.cornerSquareColor ?? foreground,
+    'cornerSquareColor'
+  )
+  const cornerDot = color(
+    options.cornerDotColor ?? foreground,
+    'cornerDotColor'
+  )
 
   const logo = options.logo
   const level = options.errorCorrection ?? (logo ? 'H' : 'M')
@@ -172,7 +215,9 @@ export function renderQrSvg(
     : null
 
   const inEye = (r: number, c: number) =>
-    (r < EYE && c < EYE) || (r < EYE && c >= n - EYE) || (r >= n - EYE && c < EYE)
+    (r < EYE && c < EYE) ||
+    (r < EYE && c >= n - EYE) ||
+    (r >= n - EYE && c < EYE)
 
   const inLogo = (r: number, c: number) =>
     !!logoZone &&
@@ -181,11 +226,30 @@ export function renderQrSvg(
     r + q + 1 > logoZone.min &&
     r + q < logoZone.max
 
+  const drawn = (r: number, c: number) =>
+    r >= 0 &&
+    c >= 0 &&
+    r < n &&
+    c < n &&
+    matrix.isDark(r, c) &&
+    !inEye(r, c) &&
+    !inLogo(r, c)
+
   let dots = ''
   for (let r = 0; r < n; r++) {
     for (let c = 0; c < n; c++) {
-      if (!matrix.isDark(r, c) || inEye(r, c) || inLogo(r, c)) continue
-      dots += dotPath(options.dotStyle, c + q, r + q)
+      if (!drawn(r, c)) continue
+      dots +=
+        options.dotStyle === 'fluid'
+          ? fluidPath(
+              c + q,
+              r + q,
+              drawn(r - 1, c),
+              drawn(r, c + 1),
+              drawn(r + 1, c),
+              drawn(r, c - 1)
+            )
+          : dotPath(options.dotStyle, c + q, r + q)
     }
   }
 
@@ -194,7 +258,9 @@ export function renderQrSvg(
     [q + n - EYE, q],
     [q, q + n - EYE]
   ]
-    .map(([x, y]) => eyeMarkup(options.cornerStyle, x, y, cornerSquare, cornerDot))
+    .map(([x, y]) =>
+      eyeMarkup(options.cornerStyle, x, y, cornerSquare, cornerDot)
+    )
     .join('')
 
   const logoMarkup =
@@ -206,7 +272,10 @@ export function renderQrSvg(
   if (caption) {
     // Shrink long captions so they stay inside the quiet zone.
     const available = width - 2 * Math.max(q, 1)
-    const fontSize = Math.min(width * 0.055, available / (caption.length * 0.58))
+    const fontSize = Math.min(
+      width * 0.055,
+      available / (caption.length * 0.58)
+    )
     const baseline = width + captionHeight / 2 + fontSize * 0.35 - q * 0.25
     captionMarkup = `<text x="${num(width / 2)}" y="${num(baseline)}" text-anchor="middle" font-family="${FONT_STACK}" font-size="${num(fontSize)}" font-weight="600" fill="${foreground}">${xml(caption)}</text>`
   }

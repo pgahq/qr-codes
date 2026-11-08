@@ -1,9 +1,25 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { PGA_LOGOS, type QrAppearance } from '../appearance'
+import { PGA_LOGOS, PGA_NAVY, type CornerStyle, type DotStyle, type QrAppearance } from '../appearance'
 import { canCopyQr, copyQrToClipboard, downloadQr } from '../browser'
 import { suggestCaption, type QrContent, type QrContentType, type WifiSecurity } from '../content'
 import { loadStoredLogos, saveStoredLogos } from './logoFile'
 import { renderQrState } from './useQrSvg'
+
+export type QrStyleId = 'classic' | 'rounded' | 'dots' | 'fluid'
+export type QrColorId = 'navy' | 'black'
+
+/** Single-colour looks offered by the builder. */
+export const QR_STYLES: readonly { id: QrStyleId; label: string; dotStyle: DotStyle; cornerStyle: CornerStyle }[] = [
+  { id: 'classic', label: 'Classic', dotStyle: 'square', cornerStyle: 'square' },
+  { id: 'rounded', label: 'Rounded', dotStyle: 'rounded', cornerStyle: 'rounded' },
+  { id: 'dots', label: 'Dots', dotStyle: 'dots', cornerStyle: 'dot' },
+  { id: 'fluid', label: 'Fluid', dotStyle: 'fluid', cornerStyle: 'fluid' }
+]
+
+export const QR_COLORS: readonly { id: QrColorId; label: string; value: string }[] = [
+  { id: 'navy', label: 'Navy', value: PGA_NAVY },
+  { id: 'black', label: 'Black', value: '#000000' }
+]
 
 export type BuilderTab = Extract<QrContentType, 'url' | 'wifi' | 'sms'>
 
@@ -18,12 +34,18 @@ export interface QrBuilderEvent {
   /** Present for download/copy. */
   hasLogo?: boolean
   hasCaption?: boolean
+  style?: QrStyleId
+  color?: QrColorId
 }
 
 export interface UseQrBuilderOptions {
   defaultTab?: BuilderTab
   /** URL prefilled on the URL tab. Default: empty (the field shows a placeholder). */
   defaultUrl?: string
+  /** Look selected on first render. Default: classic. */
+  defaultStyle?: QrStyleId
+  /** Code color selected on first render. Default: navy. */
+  defaultColor?: QrColorId
   /**
    * localStorage key used to remember uploaded logos between visits.
    * Pass `null` to keep them for the current page only.
@@ -60,6 +82,8 @@ export function useQrBuilder(options: UseQrBuilderOptions = {}) {
   const {
     defaultTab = 'url',
     defaultUrl = '',
+    defaultStyle = 'classic',
+    defaultColor = 'navy',
     storageKey = DEFAULT_STORAGE_KEY,
     appearance: baseAppearance,
     logoPresets = DEFAULT_LOGO_PRESETS,
@@ -77,6 +101,8 @@ export function useQrBuilder(options: UseQrBuilderOptions = {}) {
   }>({ ssid: '', password: '', security: 'WPA', hidden: false })
   const [sms, setSms] = useState({ phone: '', message: '' })
   const [captionOverride, setCaptionOverride] = useState<string | null>(null)
+  const [styleId, setStyleId] = useState<QrStyleId>(defaultStyle)
+  const [colorId, setColorId] = useState<QrColorId>(defaultColor)
   const [customLogos, setCustomLogos] = useState<string[]>([])
   const [logo, setLogoState] = useState<string | null>(
     options.defaultLogo === undefined ? (logoPresets[0]?.src ?? null) : options.defaultLogo
@@ -117,14 +143,21 @@ export function useQrBuilder(options: UseQrBuilderOptions = {}) {
   }, [tab, url, wifi, sms])
 
   const caption = captionOverride ?? suggestCaption(content)
+  const look = QR_STYLES.find((style) => style.id === styleId) ?? QR_STYLES[0]
+  const color = QR_COLORS.find((item) => item.id === colorId) ?? QR_COLORS[0]
 
   const appearance: QrAppearance = useMemo(
     () => ({
       ...baseAppearance,
+      foreground: color.value,
+      cornerSquareColor: undefined,
+      cornerDotColor: undefined,
+      dotStyle: look.dotStyle,
+      cornerStyle: look.cornerStyle,
       caption: caption.trim() || undefined,
       logo: logoEnabled && logo ? { src: logo } : undefined
     }),
-    [baseAppearance, caption, logo, logoEnabled]
+    [baseAppearance, caption, color, look, logo, logoEnabled]
   )
 
   const qr = useMemo(() => renderQrState(content, appearance), [content, appearance])
@@ -198,12 +231,12 @@ export function useQrBuilder(options: UseQrBuilderOptions = {}) {
     try {
       await downloadQr(qr.payload, appearance, { filename: caption.trim() || filename })
       setDownloadStatus('done')
-      emit({ type: 'download', hasLogo: !!appearance.logo, hasCaption: !!appearance.caption }, tab)
+      emit({ type: 'download', hasLogo: !!appearance.logo, hasCaption: !!appearance.caption, style: styleId, color: colorId }, tab)
     } catch (error) {
       setDownloadStatus('error')
       setActionError(error instanceof Error ? error.message : 'Download failed.')
     }
-  }, [appearance, caption, emit, filename, qr.payload, tab])
+  }, [appearance, caption, colorId, emit, filename, qr.payload, styleId, tab])
 
   const copy = useCallback(async () => {
     if (!qr.payload) return
@@ -212,14 +245,14 @@ export function useQrBuilder(options: UseQrBuilderOptions = {}) {
     try {
       await copyQrToClipboard(qr.payload, appearance)
       setCopyStatus('done')
-      emit({ type: 'copy', hasLogo: !!appearance.logo, hasCaption: !!appearance.caption }, tab)
+      emit({ type: 'copy', hasLogo: !!appearance.logo, hasCaption: !!appearance.caption, style: styleId, color: colorId }, tab)
       clearTimeout(copyTimer.current)
       copyTimer.current = setTimeout(() => setCopyStatus('idle'), COPY_FEEDBACK_MS)
     } catch (error) {
       setCopyStatus('error')
       setActionError(error instanceof Error ? error.message : 'Copy failed.')
     }
-  }, [appearance, emit, qr.payload, tab])
+  }, [appearance, colorId, emit, qr.payload, styleId, tab])
 
   useEffect(() => {
     clearTimeout(copyTimer.current)
@@ -246,6 +279,10 @@ export function useQrBuilder(options: UseQrBuilderOptions = {}) {
     logoEnabled,
     setLogo: track(setLogo),
     setLogoEnabled: track(setLogoEnabled),
+    styleId,
+    setStyleId: track(setStyleId),
+    colorId,
+    setColorId: track(setColorId),
     logoPresets,
     customLogos,
     maxCustomLogos: MAX_CUSTOM_LOGOS,

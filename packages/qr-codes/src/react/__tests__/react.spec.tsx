@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { QrBuilder } from '../QrBuilder'
@@ -209,7 +209,8 @@ describe('<QrBuilder />', () => {
       const { user } = setup()
       await upload(user)
       await user.click(await screen.findByRole('button', { name: 'Remove uploaded logo 1' }))
-      expect(screen.getAllByRole('radio').filter((r) => r.getAttribute('aria-checked') === 'true')).toHaveLength(1)
+      const logos = within(screen.getByRole('radiogroup', { name: 'Logo' }))
+      expect(logos.getAllByRole('radio').filter((r) => r.getAttribute('aria-checked') === 'true')).toHaveLength(1)
       expect(screen.getByRole('radio', { name: 'PGA of America (blue)' }).getAttribute('aria-checked')).toBe('true')
     })
 
@@ -267,6 +268,45 @@ describe('<QrBuilder />', () => {
       setup()
       await user.pointer({ keys: '[MouseRight]', target: screen.getByText('Your QR code will appear here') })
       expect(screen.queryByRole('menu')).toBeNull()
+    })
+  })
+
+  describe('style and color', () => {
+    const downloaded = () => vi.mocked(browser.downloadQr).mock.calls[0]![1]!
+
+    it('defaults to the classic look in navy and offers four looks and two colors', async () => {
+      const { user } = setup({ defaultUrl: 'https://pga.com' })
+      expect(screen.getAllByRole('radio', { name: /^(Classic|Rounded|Dots|Fluid)$/ })).toHaveLength(4)
+      expect(screen.getAllByRole('radio', { name: /^(Navy|Black)$/ })).toHaveLength(2)
+      await user.click(screen.getByRole('button', { name: 'Download' }))
+      await waitFor(() => expect(browser.downloadQr).toHaveBeenCalled())
+      expect(downloaded()).toMatchObject({ foreground: '#00205B', dotStyle: 'square', cornerStyle: 'square' })
+    })
+
+    it('applies the chosen look and color as a single color, ignoring separate corner colors from the host', async () => {
+      const { user, onEvent } = setup({
+        defaultUrl: 'https://pga.com',
+        appearance: { cornerSquareColor: '#0053FF', cornerDotColor: '#0053FF' }
+      })
+      await user.click(screen.getByRole('radio', { name: 'Fluid' }))
+      await user.click(screen.getByRole('radio', { name: 'Black' }))
+      expect(screen.getByRole('radio', { name: 'Fluid' }).getAttribute('aria-checked')).toBe('true')
+      expect(screen.getByRole('radio', { name: 'Classic' }).getAttribute('aria-checked')).toBe('false')
+
+      await user.click(screen.getByRole('button', { name: 'Download' }))
+      await waitFor(() => expect(browser.downloadQr).toHaveBeenCalled())
+      expect(downloaded()).toMatchObject({ foreground: '#000000', dotStyle: 'fluid', cornerStyle: 'fluid' })
+      expect(downloaded().cornerSquareColor).toBeUndefined()
+      expect(downloaded().cornerDotColor).toBeUndefined()
+      expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ type: 'download', style: 'fluid', color: 'black' }))
+    })
+
+    it('shows miniature previews of the current content in each look', () => {
+      setup({ defaultUrl: 'https://pga.com' })
+      const tile = screen.getByRole('radio', { name: 'Fluid' })
+      const src = tile.querySelector('img')!.getAttribute('src')!
+      expect(src.startsWith('data:image/svg+xml')).toBe(true)
+      expect(decodeURIComponent(src)).toContain('fill="#00205B"')
     })
   })
 })

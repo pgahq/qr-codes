@@ -20,7 +20,7 @@ export default function BuilderPage() {
       </div>
 
       <div className="card">
-        <QrBuilder appearance={{ foreground: '#00205B' }} onEvent={onEvent} />
+        <QrBuilder onEvent={onEvent} />
       </div>
 
       <div className="card">

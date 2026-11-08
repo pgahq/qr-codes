@@ -67,8 +67,8 @@ curl -X POST https://example.com/api/qr -H 'content-type: application/json' \
 | `format` | `svg`, `png` | `svg` |
 | `size` | 64-2048 px wide | `1024` |
 | `fg`, `bg` | hex, with or without `#` (`cornerSquareColor`, `cornerDotColor` also accepted) | `000000`, `ffffff` |
-| `dotStyle` | `square`, `rounded`, `dots` | `square` |
-| `cornerStyle` | `square`, `rounded`, `dot` | `square` |
+| `dotStyle` | `square`, `rounded`, `dots`, `fluid` | `square` |
+| `cornerStyle` | `square`, `rounded`, `dot`, `fluid` | `square` |
 | `logo` | preset key (`blue`, `circle`) or an https URL on an allowed host | none |
 | `logoScale` | 0.1-0.3 of QR width | `0.22` |
 | `caption` | up to 80 characters | none |
@@ -100,6 +100,7 @@ import { QrBuilder, QrCode } from '@pgahq/qr-codes/react'
 - `onUploadLogo(file) => Promise<url>` replaces the Cloudinary widget. Without it, uploads are shrunk to 256px and stay in the browser as data URIs.
 - Users can keep up to 5 uploaded logos (add with the `+` tile, remove with the `x` on a tile). They are saved in `localStorage` under `pgahq:qr-codes:custom-logos`; set `storageKey` to change the key or `null` to disable saving. Stored values are validated on load (png/jpeg/webp/gif data URIs and https URLs only).
 - The URL field starts empty with `https://pga.com` as placeholder text (`defaultUrl` prefills it). The caption follows the content (`pga.com/championship`, or the Wi-Fi network name) until the user types their own.
+- Below the logos, users pick one of four single-color looks (Classic, Rounded, Dots, Fluid; each tile is a miniature of their own code) and Navy or Black. The builder always renders one color, so `appearance.cornerSquareColor` / `cornerDotColor` are ignored there. `defaultStyle` and `defaultColor` set the starting choice, and `download`/`copy` events include `style` and `color`.
 - Right-clicking the code opens a Copy image / Download image menu.
 - Copy is hidden automatically where the browser cannot write images to the clipboard.
 - Need a different layout? `useQrBuilder` is the same state and actions without any markup.
@@ -123,7 +124,7 @@ const svg = renderQrSvg(
 - URLs are normalized (`pga.org` works; `https://` is added to the encoded value) and limited to http(s). `ftp:` is no longer accepted.
 - A caption gets its own strip below the code instead of overlapping the quiet zone.
 - Rendering is a pure function of its input, built on `qrcode` instead of `qr-code-styling`, so the browser, server and API produce identical output.
-- Colors are not exposed in the builder UI (the old component did not expose them either) but can be set through `appearance`.
+- The builder offers Navy or Black. Any other color, or separate corner colors, is available through `appearance` on `QrCode`, `renderQrSvg` and the API.
 
 ## Develop
 

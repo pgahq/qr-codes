@@ -33,6 +33,12 @@ const examples: Example[] = [
     appearance: { foreground: '#00205B', dotStyle: 'rounded', cornerStyle: 'rounded' }
   },
   {
+    title: 'Fluid',
+    note: "dotStyle 'fluid', cornerStyle 'fluid'. Neighbouring modules join; lone ones become circles.",
+    content: { type: 'url', url: 'https://www.pga.org/' },
+    appearance: { foreground: '#00205B', dotStyle: 'fluid', cornerStyle: 'fluid' }
+  },
+  {
     title: 'Dots',
     note: "dotStyle 'dots', cornerStyle 'dot', separate corner colors.",
     content: { type: 'url', url: 'https://www.pga.org/' },

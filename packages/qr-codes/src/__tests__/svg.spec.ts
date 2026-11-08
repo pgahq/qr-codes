@@ -9,8 +9,7 @@ import type { QrContent } from '../content'
 import { QrRenderError, renderQrSvg } from '../svg'
 
 // 1x1 transparent png
-const PIXEL =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+const PIXEL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
 
 // ZXing is the decoder behind most phone scanners, so passing it is a meaningful scannability check.
 const resolved = createRequire(import.meta.url).resolve('zxing-wasm/reader')
@@ -36,7 +35,25 @@ describe('renderQrSvg', () => {
     ['sms', { type: 'sms', phone: '+18005551212', message: 'Hi' }, 'smsto:+18005551212:Hi'],
     ['rounded dots', { type: 'url', url: 'pga.org' }, 'https://pga.org/', { dotStyle: 'rounded', cornerStyle: 'rounded' }],
     ['round dots', { type: 'url', url: 'pga.org' }, 'https://pga.org/', { dotStyle: 'dots', cornerStyle: 'dot' }],
-    ['brand colors', { type: 'url', url: 'pga.org' }, 'https://pga.org/', { foreground: '#00205B', background: '#fff', cornerSquareColor: '#000' }],
+    ['fluid', { type: 'url', url: 'pga.org' }, 'https://pga.org/', { dotStyle: 'fluid', cornerStyle: 'fluid' }],
+    [
+      'fluid navy',
+      { type: 'wifi', ssid: 'Club', password: 'secret', security: 'WPA' },
+      'WIFI:T:WPA;S:Club;P:secret;;',
+      { dotStyle: 'fluid', cornerStyle: 'fluid', foreground: '#00205B' }
+    ],
+    [
+      'fluid with logo and caption',
+      { type: 'url', url: 'https://www.pga.org/championship/tickets' },
+      'https://www.pga.org/championship/tickets',
+      { dotStyle: 'fluid', cornerStyle: 'fluid', logo: { src: PIXEL, scale: 0.3 }, caption: 'PGA Championship' }
+    ],
+    [
+      'brand colors',
+      { type: 'url', url: 'pga.org' },
+      'https://pga.org/',
+      { foreground: '#00205B', background: '#fff', cornerSquareColor: '#000' }
+    ],
     ['caption', { type: 'url', url: 'pga.org' }, 'https://pga.org/', { caption: 'Scan to visit the PGA' }],
     ['logo', { type: 'url', url: 'https://www.pga.org/championship' }, 'https://www.pga.org/championship', { logo: { src: PIXEL } }]
   ]

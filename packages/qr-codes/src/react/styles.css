@@ -207,6 +207,30 @@
   object-fit: contain;
 }
 
+.pga-qr-appearance {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 32px;
+}
+
+.pga-qr-style-option {
+  padding: 6px;
+}
+
+.pga-qr-style-option svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.pga-qr-swatch {
+  display: block;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.35);
+}
+
 .pga-qr-logo-add {
   border-style: dashed;
   color: var(--pga-qr-navy);
