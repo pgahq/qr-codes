@@ -26,6 +26,12 @@ const TABS: { id: BuilderTab; label: string }[] = [
   { id: 'sms', label: 'Send a text' }
 ]
 
+const TAB_BLURB: Record<BuilderTab, string> = {
+  url: "Scanning opens this page in the phone's browser.",
+  wifi: 'Scanning joins this Wi-Fi network.',
+  sms: 'Scanning starts a text to this number.'
+}
+
 function Field({
   label,
   required,
@@ -390,6 +396,7 @@ export function QrBuilder({ className, onUploadLogo, allowLogoUpload = true, pla
         <Tabs state={state} idPrefix={idPrefix} />
 
         <div role="tabpanel" id={`${idPrefix}-panel`} aria-labelledby={`${idPrefix}-tab-${state.tab}`} className="pga-qr-panel">
+          <p className="pga-qr-blurb">{TAB_BLURB[state.tab]}</p>
           <ContentFields key={state.tab} state={state} idPrefix={idPrefix} captionField={captionField} />
         </div>
 
