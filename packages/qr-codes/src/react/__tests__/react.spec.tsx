@@ -344,6 +344,18 @@ describe('<QrBuilder />', () => {
     })
   })
 
+  describe('autoFocus', () => {
+    it('does not take focus by default', () => {
+      setup()
+      expect(document.activeElement).toBe(document.body)
+    })
+
+    it('focuses the URL field on mount when enabled', () => {
+      setup({ autoFocus: true })
+      expect(document.activeElement).toBe(screen.getByLabelText(/URL/))
+    })
+  })
+
   describe('format menus', () => {
     it('offers SVG and PNG for downloads and passes the choice through', async () => {
       const { user, onEvent } = setup({ defaultUrl: 'https://pga.com' })

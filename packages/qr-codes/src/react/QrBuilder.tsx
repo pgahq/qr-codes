@@ -1,4 +1,15 @@
-import { useCallback, useId, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type KeyboardEvent,
+  type MouseEvent,
+  type ReactNode
+} from 'react'
 import { CAPTION_MAX_LENGTH } from '../appearance'
 import { SMS_MESSAGE_MAX_LENGTH } from '../content'
 import { renderQrSvg } from '../svg'
@@ -17,6 +28,8 @@ export interface QrBuilderProps extends UseQrBuilderOptions {
   onUploadLogo?: (file: File) => Promise<string>
   /** Set false to hide the custom logo upload. */
   allowLogoUpload?: boolean
+  /** Focus the first field of the form when the builder mounts. Off by default so embeds don't steal focus from the host page. */
+  autoFocus?: boolean
   /** Placeholder shown until the content is valid. Default: the first logo preset. */
   placeholder?: ReactNode
   /**
@@ -498,6 +511,7 @@ export function QrBuilder({
   className,
   onUploadLogo,
   allowLogoUpload = true,
+  autoFocus = false,
   placeholder,
   link,
   linkLabel = 'Link',
@@ -517,6 +531,11 @@ export function QrBuilder({
   } | null>(null)
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null)
   const closeMenu = useCallback(() => setMenu(null), [])
+  const panel = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (autoFocus) panel.current?.querySelector<HTMLElement>('input:not([type="checkbox"]), textarea')?.focus({ preventScroll: true })
+  }, [autoFocus])
 
   const pngCopyLabel = state.copySupported ? 'PNG' : 'PNG (not supported here)'
 
@@ -583,7 +602,7 @@ export function QrBuilder({
       <div className="pga-qr-settings">
         <Tabs state={state} idPrefix={idPrefix} />
 
-        <div role="tabpanel" id={`${idPrefix}-panel`} aria-labelledby={`${idPrefix}-tab-${state.tab}`} className="pga-qr-panel">
+        <div ref={panel} role="tabpanel" id={`${idPrefix}-panel`} aria-labelledby={`${idPrefix}-tab-${state.tab}`} className="pga-qr-panel">
           <p className="pga-qr-blurb">{TAB_BLURB[state.tab]}</p>
           <ContentFields key={state.tab} state={state} idPrefix={idPrefix} captionField={captionField} />
         </div>
