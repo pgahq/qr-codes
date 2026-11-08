@@ -61,3 +61,16 @@ export const PGA_LOGOS = {
 } as const
 
 export type PgaLogoKey = keyof typeof PGA_LOGOS
+
+/**
+ * What the builder opens with (Navy, Fluid, PGA blue logo) and what the API
+ * renders when a request does not say otherwise. `QR_COLORS` and `QR_STYLES`
+ * in the builder resolve to the same values (covered by a test), so the two
+ * cannot drift apart.
+ */
+export const PGA_DEFAULT_APPEARANCE = {
+  foreground: PGA_NAVY,
+  dotStyle: 'fluid',
+  cornerStyle: 'fluid',
+  logo: { src: PGA_LOGOS.blue.src }
+} as const satisfies QrAppearance

@@ -1,4 +1,4 @@
-import { PGA_LOGOS } from '../appearance'
+import { PGA_DEFAULT_APPEARANCE, PGA_LOGOS } from '../appearance'
 import { withInlinedLogo } from '../assets'
 import { QrRenderError, renderQrSvg } from '../svg'
 import { renderPng, PngUnavailableError } from './png'
@@ -58,11 +58,16 @@ export function createQrHandler(options: QrHandlerOptions = {}) {
     maxAgeSeconds = 86_400,
     fontFiles,
     fetch: fetchImpl,
+    defaultAppearance = PGA_DEFAULT_APPEARANCE,
+    autoCaption = true,
     ...parseOptions
   } = options
   const logoPresets = parseOptions.logoPresets ?? DEFAULT_LOGO_PRESETS
+  const defaultLogoHost = defaultAppearance.logo?.src.startsWith('https:')
+    ? [new URL(defaultAppearance.logo.src).hostname]
+    : []
   const allowedLogoHosts = [
-    ...new Set([...Object.values(logoPresets).map((src) => new URL(src).hostname), ...extraLogoHosts])
+    ...new Set([...Object.values(logoPresets).map((src) => new URL(src).hostname), ...defaultLogoHost, ...extraLogoHosts])
   ]
 
   return async function handleQrRequest(request: Request): Promise<Response> {
@@ -73,7 +78,7 @@ export function createQrHandler(options: QrHandlerOptions = {}) {
     const params = await readParams(request)
     if (params instanceof Response) return params
 
-    const parsed = parseQrRequest(params, { ...parseOptions, logoPresets })
+    const parsed = parseQrRequest(params, { ...parseOptions, logoPresets, defaultAppearance, autoCaption })
     if (!parsed.ok) return json(400, { error: parsed.error, field: parsed.field })
     const { content, payload, appearance, format, filename, download } = parsed.value
 
