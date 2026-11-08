@@ -10,6 +10,7 @@ vi.mock('../../browser', async (importOriginal) => ({
   canCopyQr: () => true,
   downloadQr: vi.fn(async () => undefined),
   copyQrToClipboard: vi.fn(async () => undefined),
+  copyQrSvgToClipboard: vi.fn(async () => undefined),
   copyTextToClipboard: vi.fn(async () => undefined)
 }))
 
@@ -54,6 +55,12 @@ describe('<QrBuilder />', () => {
     await user.type(input, value)
   }
 
+  const choose = async (user: ReturnType<typeof userEvent.setup>, button: string, format: 'SVG' | 'PNG') => {
+    await user.click(screen.getByRole('button', { name: button }))
+    await user.click(await screen.findByRole('menuitem', { name: new RegExp(`^${format}`) }))
+  }
+  const downloadPng = (user: ReturnType<typeof userEvent.setup>) => choose(user, 'Download image', 'PNG')
+
   it('starts empty with example text as placeholders rather than real values', () => {
     setup()
     const url = screen.getByLabelText(/^URL/) as HTMLInputElement
@@ -63,17 +70,17 @@ describe('<QrBuilder />', () => {
     expect(caption.value).toBe('')
     expect(caption.placeholder).toBe('pga.com')
     expect(screen.getByText('Your QR code will appear here')).toBeTruthy()
-    expect((screen.getByRole('button', { name: 'Download' }) as HTMLButtonElement).disabled).toBe(true)
+    expect((screen.getByRole('button', { name: 'Download image' }) as HTMLButtonElement).disabled).toBe(true)
   })
 
   it('shows a placeholder and disables actions until the content is valid', async () => {
     const { user } = setup()
     expect(screen.getByText('Your QR code will appear here')).toBeTruthy()
-    expect((screen.getByRole('button', { name: 'Download' }) as HTMLButtonElement).disabled).toBe(true)
+    expect((screen.getByRole('button', { name: 'Download image' }) as HTMLButtonElement).disabled).toBe(true)
 
     await replaceUrl(user, 'pga.org')
     expect(screen.queryByText(/Will open/)).toBeNull()
-    expect((screen.getByRole('button', { name: 'Download' }) as HTMLButtonElement).disabled).toBe(false)
+    expect((screen.getByRole('button', { name: 'Download image' }) as HTMLButtonElement).disabled).toBe(false)
     expect(screen.getByRole('img', { name: 'pga.org' })).toBeTruthy()
   })
 
@@ -113,7 +120,7 @@ describe('<QrBuilder />', () => {
     const { user, onEvent } = setup()
     await replaceUrl(user, 'pga.org')
     await replaceCaption(user, 'Tickets')
-    await user.click(screen.getByRole('button', { name: 'Download' }))
+    await downloadPng(user)
 
     await waitFor(() => expect(browser.downloadQr).toHaveBeenCalledTimes(1))
     const [payload, appearance, options] = vi.mocked(browser.downloadQr).mock.calls[0]
@@ -128,17 +135,17 @@ describe('<QrBuilder />', () => {
   it('copies, then resets the copied state when the code changes', async () => {
     const { user } = setup()
     await replaceUrl(user, 'pga.org')
-    await user.click(screen.getByRole('button', { name: 'Copy' }))
-    expect(await screen.findByRole('button', { name: 'Copied!' })).toBeTruthy()
+    await choose(user, 'Copy image', 'PNG')
+    expect((await screen.findByRole('status')).textContent).toBe('Image copied')
     await user.type(screen.getByLabelText('Caption'), 'x')
-    expect(screen.getByRole('button', { name: 'Copy' })).toBeTruthy()
+    expect(screen.getByRole('status').textContent).toBe('')
   })
 
   it('can remove the logo', async () => {
     const { user } = setup()
     await replaceUrl(user, 'pga.org')
     await user.click(screen.getByRole('radio', { name: 'No logo' }))
-    await user.click(screen.getByRole('button', { name: 'Download' }))
+    await downloadPng(user)
     await waitFor(() => expect(browser.downloadQr).toHaveBeenCalled())
     expect(vi.mocked(browser.downloadQr).mock.calls[0]![1]!.logo).toBeUndefined()
   })
@@ -249,13 +256,14 @@ describe('<QrBuilder />', () => {
 
       const menu = await screen.findByRole('menu', { name: 'QR code actions' })
       expect(menu).toBeTruthy()
-      await user.click(screen.getByRole('menuitem', { name: 'Copy image' }))
+      await user.click(screen.getByRole('menuitem', { name: 'Copy PNG' }))
       await waitFor(() => expect(browser.copyQrToClipboard).toHaveBeenCalledTimes(1))
       expect(screen.queryByRole('menu')).toBeNull()
 
       await user.pointer({ keys: '[MouseRight]', target: code })
-      await user.click(await screen.findByRole('menuitem', { name: 'Download image' }))
+      await user.click(await screen.findByRole('menuitem', { name: 'Download SVG' }))
       await waitFor(() => expect(browser.downloadQr).toHaveBeenCalledTimes(1))
+      expect(vi.mocked(browser.downloadQr).mock.calls[0]![2]).toMatchObject({ format: 'svg' })
     })
 
     it('closes on Escape and is not offered before there is a code', async () => {
@@ -286,7 +294,7 @@ describe('<QrBuilder />', () => {
         'Black',
         'Greyscale'
       ])
-      await user.click(screen.getByRole('button', { name: 'Download' }))
+      await downloadPng(user)
       await waitFor(() => expect(browser.downloadQr).toHaveBeenCalled())
       expect(downloaded()).toMatchObject({ foreground: '#00205B', dotStyle: 'fluid', cornerStyle: 'fluid' })
       expect(screen.getByRole('radio', { name: 'Fluid' }).getAttribute('aria-checked')).toBe('true')
@@ -303,7 +311,7 @@ describe('<QrBuilder />', () => {
       expect(screen.getByRole('radio', { name: 'Classic' }).getAttribute('aria-checked')).toBe('true')
       expect(screen.getByRole('radio', { name: 'Fluid' }).getAttribute('aria-checked')).toBe('false')
 
-      await user.click(screen.getByRole('button', { name: 'Download' }))
+      await downloadPng(user)
       await waitFor(() => expect(browser.downloadQr).toHaveBeenCalled())
       expect(downloaded()).toMatchObject({ foreground: '#000000', dotStyle: 'square', cornerStyle: 'square' })
       expect(downloaded().cornerSquareColor).toBeUndefined()
@@ -314,13 +322,13 @@ describe('<QrBuilder />', () => {
     it('greyscale makes the code black and the logo colorless; other colors leave the logo alone', async () => {
       const { user, onEvent } = setup({ defaultUrl: 'https://pga.com' })
       await user.click(screen.getByRole('radio', { name: 'Greyscale' }))
-      await user.click(screen.getByRole('button', { name: 'Download' }))
+      await downloadPng(user)
       await waitFor(() => expect(browser.downloadQr).toHaveBeenCalledTimes(1))
       expect(downloaded()).toMatchObject({ foreground: '#000000', logo: { grayscale: true } })
       expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ type: 'download', color: 'greyscale' }))
 
       await user.click(screen.getByRole('radio', { name: 'Black' }))
-      await user.click(screen.getByRole('button', { name: 'Download' }))
+      await downloadPng(user)
       await waitFor(() => expect(browser.downloadQr).toHaveBeenCalledTimes(2))
       const second = vi.mocked(browser.downloadQr).mock.calls[1]![1]!
       expect(second).toMatchObject({ foreground: '#000000' })
@@ -336,41 +344,91 @@ describe('<QrBuilder />', () => {
     })
   })
 
-  describe('copyable link', () => {
-    it('is hidden unless a link is provided', () => {
+  describe('format menus', () => {
+    it('offers SVG and PNG for downloads and passes the choice through', async () => {
+      const { user, onEvent } = setup({ defaultUrl: 'https://pga.com' })
+      await user.click(screen.getByRole('button', { name: 'Download image' }))
+      expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['SVG', 'PNG'])
+      await user.click(screen.getByRole('menuitem', { name: 'SVG' }))
+      await waitFor(() => expect(browser.downloadQr).toHaveBeenCalledTimes(1))
+      expect(vi.mocked(browser.downloadQr).mock.calls[0]![2]).toMatchObject({ format: 'svg' })
+      expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ type: 'download', format: 'svg' }))
+      expect(screen.queryByRole('menu')).toBeNull()
+
+      await downloadPng(user)
+      await waitFor(() => expect(browser.downloadQr).toHaveBeenCalledTimes(2))
+      expect(vi.mocked(browser.downloadQr).mock.calls[1]![2]).toMatchObject({ format: 'png' })
+    })
+
+    it('copies SVG as markup and PNG as an image', async () => {
+      const { user, onEvent } = setup({ defaultUrl: 'https://pga.com' })
+      await choose(user, 'Copy image', 'SVG')
+      await waitFor(() => expect(browser.copyQrSvgToClipboard).toHaveBeenCalledTimes(1))
+      expect(browser.copyQrToClipboard).not.toHaveBeenCalled()
+      await choose(user, 'Copy image', 'PNG')
+      await waitFor(() => expect(browser.copyQrToClipboard).toHaveBeenCalledTimes(1))
+      expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ type: 'copy', format: 'svg' }))
+    })
+
+    it('toggles the menu when the same button is pressed again and closes on Escape', async () => {
+      const { user } = setup({ defaultUrl: 'https://pga.com' })
+      const button = screen.getByRole('button', { name: 'Download image' })
+      await user.click(button)
+      expect(button.getAttribute('aria-expanded')).toBe('true')
+      await user.click(button)
+      expect(screen.queryByRole('menu')).toBeNull()
+      await user.click(button)
+      await screen.findByRole('menu', { name: 'Download image as' })
+      await user.keyboard('{Escape}')
+      expect(screen.queryByRole('menu')).toBeNull()
+    })
+
+    it('has three non-primary buttons under the code, with the image ones disabled until there is a code', () => {
+      setup({ link: 'https://img.test/x' })
+      const names = ['Download image', 'Copy image', 'Copy link']
+      for (const name of names) expect(screen.getByRole('button', { name }).className).toContain('pga-qr-button-secondary')
+      expect((screen.getByRole('button', { name: 'Download image' }) as HTMLButtonElement).disabled).toBe(true)
+      expect((screen.getByRole('button', { name: 'Copy image' }) as HTMLButtonElement).disabled).toBe(true)
+      expect((screen.getByRole('button', { name: 'Copy link' }) as HTMLButtonElement).disabled).toBe(false)
+    })
+  })
+
+  describe('link button', () => {
+    it('is not shown unless a link is provided', () => {
       setup()
       expect(screen.queryByRole('button', { name: 'Copy link' })).toBeNull()
     })
 
-    it('copies when the text or the icon is clicked and confirms', async () => {
+    it('copies the link, confirms, and reports the event', async () => {
       const { user, onEvent } = setup({ link: 'https://qr.pga.org/api/qr?url=pga.com' })
       const button = screen.getByRole('button', { name: 'Copy link' })
-      expect(button.textContent).toBe('https://qr.pga.org/api/qr?url=pga.com')
-
-      await user.click(screen.getByText('https://qr.pga.org/api/qr?url=pga.com'))
+      expect(button.textContent).toBe('Link')
+      await user.click(button)
       await waitFor(() => expect(browser.copyTextToClipboard).toHaveBeenCalledWith('https://qr.pga.org/api/qr?url=pga.com'))
-      expect((await screen.findByRole('status', { name: '' })).textContent).toBe('Copied!')
+      expect((await screen.findByRole('status')).textContent).toBe('Link copied')
+      expect(button.textContent).toBe('Copied!')
       expect(onEvent.mock.calls.map(([event]) => event.type)).toContain('copy-link')
-
-      await user.click(button.querySelector('svg')!)
-      await waitFor(() => expect(browser.copyTextToClipboard).toHaveBeenCalledTimes(2))
     })
 
-    it('can be built from the builder state, and hides when the function returns nothing', async () => {
+    it('can be built from the builder state, renamed, and hidden when empty', async () => {
       const { user } = setup({
         link: (state: { qr: { payload: string | null } }) => (state.qr.payload ? `https://img.test/?u=${state.qr.payload}` : null),
         linkLabel: 'Image link'
       })
       expect(screen.queryByRole('button', { name: 'Copy image link' })).toBeNull()
       await replaceUrl(user, 'pga.com')
-      expect(screen.getByRole('button', { name: 'Copy image link' }).textContent).toBe('https://img.test/?u=https://pga.com/')
+      const button = screen.getByRole('button', { name: 'Copy image link' })
+      expect(button.textContent).toBe('Image link')
+      await user.click(button)
+      await waitFor(() => expect(browser.copyTextToClipboard).toHaveBeenCalledWith('https://img.test/?u=https://pga.com/'))
     })
 
     it('says so when copying fails', async () => {
       vi.mocked(browser.copyTextToClipboard).mockRejectedValueOnce(new Error('denied'))
       const { user } = setup({ link: 'https://example.test/x' })
       await user.click(screen.getByRole('button', { name: 'Copy link' }))
-      expect((await screen.findByRole('status')).textContent).toMatch(/Could not copy/)
+      await waitFor(() => expect(browser.copyTextToClipboard).toHaveBeenCalled())
+      expect(screen.getByRole('button', { name: 'Copy link' }).textContent).toBe('Link')
     })
   })
 })

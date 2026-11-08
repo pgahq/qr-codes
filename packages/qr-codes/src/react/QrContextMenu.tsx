@@ -13,12 +13,14 @@ interface QrContextMenuProps {
   label: string
   items: QrContextMenuItem[]
   onClose: () => void
+  /** Focus the first item right away (keyboard-opened menus). */
+  focusFirst?: boolean
 }
 
 const VIEWPORT_MARGIN = 8
 
 /** A small right-click menu rendered in a portal so page transforms and overflow cannot clip it. */
-export function QrContextMenu({ x, y, label, items, onClose }: QrContextMenuProps) {
+export function QrContextMenu({ x, y, label, items, onClose, focusFirst = false }: QrContextMenuProps) {
   const menu = useRef<HTMLDivElement>(null)
   const [position, setPosition] = useState({ left: x, top: y })
 
@@ -32,10 +34,13 @@ export function QrContextMenu({ x, y, label, items, onClose }: QrContextMenuProp
   }, [x, y])
 
   useEffect(() => {
-    menu.current?.focus({ preventScroll: true })
+    if (focusFirst) menu.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus()
+    else menu.current?.focus({ preventScroll: true })
 
     const close = (event: Event) => {
       if (event.target instanceof Node && menu.current?.contains(event.target)) return
+      // Buttons that open this menu toggle it themselves.
+      if (event.target instanceof Element && event.target.closest('[data-pga-qr-menu-trigger]')) return
       onClose()
     }
     const dismiss = () => onClose()
@@ -51,7 +56,7 @@ export function QrContextMenu({ x, y, label, items, onClose }: QrContextMenuProp
       window.removeEventListener('resize', dismiss)
       window.removeEventListener('blur', dismiss)
     }
-  }, [onClose])
+  }, [onClose, focusFirst])
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Escape' || event.key === 'Tab') {

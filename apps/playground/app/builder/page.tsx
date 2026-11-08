@@ -41,7 +41,7 @@ export default function BuilderPage() {
       </div>
 
       <div className="card">
-        <QrBuilder onEvent={onEvent} link={apiImageLink} linkLabel="Image link" />
+        <QrBuilder onEvent={onEvent} link={apiImageLink} />
       </div>
 
       <div className="card">

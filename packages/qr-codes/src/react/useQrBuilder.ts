@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { PGA_LOGOS, PGA_NAVY, type CornerStyle, type DotStyle, type QrAppearance } from '../appearance'
-import { canCopyQr, copyQrToClipboard, copyTextToClipboard, downloadQr } from '../browser'
+import { canCopyQr, copyQrSvgToClipboard, copyQrToClipboard, copyTextToClipboard, downloadQr } from '../browser'
 import { suggestCaption, type QrContent, type QrContentType, type WifiSecurity } from '../content'
 import { loadStoredLogos, saveStoredLogos } from './logoFile'
 import { renderQrState } from './useQrSvg'
@@ -21,6 +21,8 @@ export const QR_COLORS: readonly { id: QrColorId; label: string; value: string; 
   { id: 'greyscale', label: 'Greyscale', value: '#000000', swatch: 'linear-gradient(135deg, #000000 50%, #9a9a9a 50%)', grayscale: true }
 ]
 
+export type ImageFormat = 'png' | 'svg'
+
 export type BuilderTab = Extract<QrContentType, 'url' | 'wifi' | 'sms'>
 
 export interface LogoPreset {
@@ -34,6 +36,7 @@ export interface QrBuilderEvent {
   /** Present for download/copy. */
   hasLogo?: boolean
   hasCaption?: boolean
+  format?: ImageFormat
   style?: QrStyleId
   color?: QrColorId
 }
@@ -225,35 +228,44 @@ export function useQrBuilder(options: UseQrBuilderOptions = {}) {
     [commitCustomLogos, logoPresets]
   )
 
-  const download = useCallback(async () => {
-    if (!qr.payload) return
-    setDownloadStatus('working')
-    setActionError(null)
-    try {
-      await downloadQr(qr.payload, appearance, { filename: caption.trim() || filename })
-      setDownloadStatus('done')
-      emit({ type: 'download', hasLogo: !!appearance.logo, hasCaption: !!appearance.caption, style: styleId, color: colorId }, tab)
-    } catch (error) {
-      setDownloadStatus('error')
-      setActionError(error instanceof Error ? error.message : 'Download failed.')
-    }
-  }, [appearance, caption, colorId, emit, filename, qr.payload, styleId, tab])
+  const download = useCallback(
+    async (format: ImageFormat = 'png') => {
+      if (!qr.payload) return
+      setDownloadStatus('working')
+      setActionError(null)
+      try {
+        await downloadQr(qr.payload, appearance, { filename: caption.trim() || filename, format })
+        setDownloadStatus('done')
+        emit(
+          { type: 'download', format, hasLogo: !!appearance.logo, hasCaption: !!appearance.caption, style: styleId, color: colorId },
+          tab
+        )
+      } catch (error) {
+        setDownloadStatus('error')
+        setActionError(error instanceof Error ? error.message : 'Download failed.')
+      }
+    },
+    [appearance, caption, colorId, emit, filename, qr.payload, styleId, tab]
+  )
 
-  const copy = useCallback(async () => {
-    if (!qr.payload) return
-    setCopyStatus('working')
-    setActionError(null)
-    try {
-      await copyQrToClipboard(qr.payload, appearance)
-      setCopyStatus('done')
-      emit({ type: 'copy', hasLogo: !!appearance.logo, hasCaption: !!appearance.caption, style: styleId, color: colorId }, tab)
-      clearTimeout(copyTimer.current)
-      copyTimer.current = setTimeout(() => setCopyStatus('idle'), COPY_FEEDBACK_MS)
-    } catch (error) {
-      setCopyStatus('error')
-      setActionError(error instanceof Error ? error.message : 'Copy failed.')
-    }
-  }, [appearance, colorId, emit, qr.payload, styleId, tab])
+  const copy = useCallback(
+    async (format: ImageFormat = 'png') => {
+      if (!qr.payload) return
+      setCopyStatus('working')
+      setActionError(null)
+      try {
+        await (format === 'svg' ? copyQrSvgToClipboard : copyQrToClipboard)(qr.payload, appearance)
+        setCopyStatus('done')
+        emit({ type: 'copy', format, hasLogo: !!appearance.logo, hasCaption: !!appearance.caption, style: styleId, color: colorId }, tab)
+        clearTimeout(copyTimer.current)
+        copyTimer.current = setTimeout(() => setCopyStatus('idle'), COPY_FEEDBACK_MS)
+      } catch (error) {
+        setCopyStatus('error')
+        setActionError(error instanceof Error ? error.message : 'Copy failed.')
+      }
+    },
+    [appearance, colorId, emit, qr.payload, styleId, tab]
+  )
 
   const linkTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   useEffect(() => () => clearTimeout(linkTimer.current), [])

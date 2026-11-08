@@ -26,7 +26,7 @@ For a repo that installs it in CI, grant that repo access under the package's "M
 
 | Import | Runs in | What it has |
 | --- | --- | --- |
-| `@pgahq/qr-codes` | browser and server | `renderQrSvg`, `encodeQrContent`, `normalizeUrl`, logo inlining, `downloadQr`, `copyQrToClipboard`, `PGA_LOGOS` |
+| `@pgahq/qr-codes` | browser and server | `renderQrSvg`, `encodeQrContent`, `normalizeUrl`, logo inlining, `downloadQr`, `copyQrToClipboard`, `copyQrSvgToClipboard`, `PGA_LOGOS` |
 | `@pgahq/qr-codes/react` | browser (client components) | `<QrBuilder />`, `<QrCode />`, `useQrBuilder`, `useQrSvg` |
 | `@pgahq/qr-codes/server` | server | `createQrHandler`, `parseQrRequest`, `renderPng` |
 | `@pgahq/qr-codes/styles.css` | | styles for `<QrBuilder />` and `<QrCode />` |
@@ -97,14 +97,15 @@ import { QrBuilder, QrCode } from '@pgahq/qr-codes/react'
 <QrCode content={{ type: 'url', url: 'pga.org' }} appearance={{ caption: 'Scan me', size: 512 }} />
 ```
 
-- `onEvent` receives `start`, `download` and `copy`, replacing the old hard-coded Google Tag Manager calls. Wire them to GTM, Amplitude, or nothing.
+- `onEvent` receives `start`, `download`, `copy` and `copy-link`, replacing the old hard-coded Google Tag Manager calls. Wire them to GTM, Amplitude, or nothing.
 - `onUploadLogo(file) => Promise<url>` replaces the Cloudinary widget. Without it, uploads are shrunk to 256px and stay in the browser as data URIs.
 - Users can keep up to 5 uploaded logos (add with the `+` tile, remove with the `x` on a tile). They are saved in `localStorage` under `pgahq:qr-codes:custom-logos`; set `storageKey` to change the key or `null` to disable saving. Stored values are validated on load (png/jpeg/webp/gif data URIs and https URLs only).
 - The URL field starts empty with `https://pga.com` as placeholder text (`defaultUrl` prefills it). The caption follows the content (`pga.com/championship`, or the Wi-Fi network name) until the user types their own.
-- Below the logos, users pick one of two single-color looks (Fluid, the default, or Classic; each tile is a miniature of their own code) and Navy, Black or Greyscale (a black code with the logo desaturated; `logo.grayscale` in `appearance`). The builder always renders one color, so `appearance.cornerSquareColor` / `cornerDotColor` are ignored there. The builder starts with Fluid in Navy; `defaultStyle` (`fluid` or `classic`) and `defaultColor` change the starting choice, and `download`/`copy` events include `style` and `color`.
-- `link` (a string, or `(state) => string | null`) adds a read-only field with a copy icon at the bottom, for example the URL of the generated image; clicking the text or the icon copies it, and a `copy-link` event is emitted. `linkLabel` renames it. Nothing is shown when no link is given.
-- Right-clicking the code opens a Copy image / Download image menu.
-- Copy is hidden automatically where the browser cannot write images to the clipboard.
+- Below the logos, users pick one of two single-color looks (Fluid, the default, or Classic; each tile is a miniature of their own code) and Navy, Black or Greyscale (a black code with the logo desaturated; `logo.grayscale` in `appearance`). The builder always renders one color, so `appearance.cornerSquareColor` / `cornerDotColor` are ignored there. The builder starts with Fluid in Navy; `defaultStyle` (`fluid` or `classic`) and `defaultColor` change the starting choice, and `download`/`copy` events include `format` (`svg` or `png`), `style` and `color`.
+- Under the code are three secondary buttons: an Image button with a disk icon (download), an Image button with a copy icon, and, when `link` is set, a Link button with a copy icon. Both Image buttons open a small menu to choose SVG or PNG; copying SVG puts the markup on the clipboard, copying PNG puts an image there.
+- `link` (a string, or `(state) => string | null`) is the text the Link button copies, for example the URL of the generated image; a `copy-link` event is emitted. `linkLabel` renames the button. The button is hidden when no link is given.
+- Right-clicking the code opens a menu with Copy PNG, Copy SVG, Download PNG and Download SVG.
+- Where the browser cannot write images to the clipboard, only the Copy PNG choice is disabled; SVG still works.
 - Need a different layout? `useQrBuilder` is the same state and actions without any markup.
 
 ## Core

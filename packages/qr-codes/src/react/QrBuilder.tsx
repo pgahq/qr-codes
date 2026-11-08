@@ -3,7 +3,7 @@ import { CAPTION_MAX_LENGTH } from '../appearance'
 import { SMS_MESSAGE_MAX_LENGTH } from '../content'
 import { renderQrSvg } from '../svg'
 import { readLogoFile } from './logoFile'
-import { QrContextMenu } from './QrContextMenu'
+import { QrContextMenu, type QrContextMenuItem } from './QrContextMenu'
 import { QrCode } from './QrCode'
 import { QR_COLORS, QR_STYLES, useQrBuilder, type BuilderTab, type QrBuilderState, type UseQrBuilderOptions } from './useQrBuilder'
 
@@ -20,11 +20,11 @@ export interface QrBuilderProps extends UseQrBuilderOptions {
   /** Placeholder shown until the content is valid. Default: the first logo preset. */
   placeholder?: ReactNode
   /**
-   * Optional link shown at the bottom with a copy button (for example a URL for the generated image).
-   * Pass a function to build it from the current state; return nothing to hide it.
+   * Optional link behind a "Link" button under the code (for example a URL for the generated image).
+   * Pass a function to build it from the current state; return nothing to hide the button.
    */
   link?: string | ((state: QrBuilderState) => string | null | undefined)
-  /** Label above the link. Default: "Link". */
+  /** Text on the link button. Default: "Link". */
   linkLabel?: string
 }
 
@@ -150,35 +150,23 @@ function CheckIcon() {
   )
 }
 
-function CopyLink({ state, label, url }: { state: QrBuilderState; label: string; url: string }) {
-  const [copiedUrl, setCopiedUrl] = useState<string | null>(null)
-  const copied = state.linkStatus === 'done' && copiedUrl === url
-  const failed = state.linkStatus === 'error'
-
-  const onCopy = async () => {
-    setCopiedUrl(url)
-    await state.copyLink(url)
-  }
-
+function DiskIcon() {
   return (
-    <div className="pga-qr-link">
-      <span className="pga-qr-label">{label}</span>
-      <button
-        type="button"
-        className="pga-qr-link-button"
-        aria-label={`Copy ${label.toLowerCase()}`}
-        title="Copy to clipboard"
-        onClick={onCopy}
-      >
-        <span className="pga-qr-link-text">{url}</span>
-        <span className="pga-qr-link-icon" data-copied={copied || undefined}>
-          {copied ? <CheckIcon /> : <CopyIcon />}
-        </span>
-      </button>
-      <span className="pga-qr-link-status" role="status">
-        {copied ? 'Copied!' : failed ? 'Could not copy. Select the link and copy it manually.' : ''}
-      </span>
-    </div>
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M5 3h11l4 4v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+      <path d="M7 3v5h8V3" />
+      <rect x="7" y="13" width="10" height="8" rx="1" />
+    </svg>
   )
 }
 
@@ -519,14 +507,62 @@ export function QrBuilder({
   const state = useQrBuilder(options)
   const ready = !!state.qr.svg
   const linkUrl = typeof link === 'function' ? link(state) : link
-  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
+  const [menu, setMenu] = useState<{
+    kind: 'download' | 'copy' | 'context'
+    x: number
+    y: number
+    label: string
+    items: QrContextMenuItem[]
+    focusFirst: boolean
+  } | null>(null)
+  const [copiedUrl, setCopiedUrl] = useState<string | null>(null)
   const closeMenu = useCallback(() => setMenu(null), [])
+
+  const pngCopyLabel = state.copySupported ? 'PNG' : 'PNG (not supported here)'
+
+  const toggleFormatMenu = (event: MouseEvent<HTMLButtonElement>, kind: 'download' | 'copy') => {
+    if (menu?.kind === kind) return setMenu(null)
+    const rect = event.currentTarget.getBoundingClientRect()
+    const run = kind === 'download' ? state.download : state.copy
+    setMenu({
+      kind,
+      x: rect.left,
+      y: rect.bottom + 4,
+      label: kind === 'download' ? 'Download image as' : 'Copy image as',
+      focusFirst: event.detail === 0,
+      items: [
+        { label: 'SVG', onSelect: () => run('svg') },
+        { label: kind === 'copy' ? pngCopyLabel : 'PNG', onSelect: () => run('png'), disabled: kind === 'copy' && !state.copySupported }
+      ]
+    })
+  }
 
   const onStageContextMenu = (event: MouseEvent<HTMLDivElement>) => {
     if (!ready) return
     event.preventDefault()
-    setMenu({ x: event.clientX, y: event.clientY })
+    setMenu({
+      kind: 'context',
+      x: event.clientX,
+      y: event.clientY,
+      label: 'QR code actions',
+      focusFirst: false,
+      items: [
+        { label: 'Copy PNG', onSelect: () => state.copy('png'), disabled: !state.copySupported },
+        { label: 'Copy SVG', onSelect: () => state.copy('svg') },
+        { label: 'Download PNG', onSelect: () => state.download('png') },
+        { label: 'Download SVG', onSelect: () => state.download('svg') }
+      ]
+    })
   }
+
+  const linkCopied = state.linkStatus === 'done' && copiedUrl === linkUrl
+  const copyLink = async () => {
+    if (!linkUrl) return
+    setCopiedUrl(linkUrl)
+    await state.copyLink(linkUrl)
+  }
+  const copyBusy = state.copyStatus === 'working'
+  const announcement = state.copyStatus === 'done' ? 'Image copied' : linkCopied ? `${linkLabel} copied` : ''
 
   const captionField = (
     <Field id={`${idPrefix}-caption`} label="Caption">
@@ -572,20 +608,48 @@ export function QrBuilder({
         </div>
 
         <div className="pga-qr-actions">
-          <button type="button" className="pga-qr-button" disabled={!ready || state.downloadStatus === 'working'} onClick={state.download}>
-            {state.downloadStatus === 'working' ? 'Preparing…' : 'Download'}
+          <button
+            type="button"
+            className="pga-qr-button pga-qr-button-secondary pga-qr-action"
+            aria-label="Download image"
+            aria-haspopup="menu"
+            aria-expanded={menu?.kind === 'download'}
+            data-pga-qr-menu-trigger=""
+            disabled={!ready || state.downloadStatus === 'working'}
+            onClick={(event) => toggleFormatMenu(event, 'download')}
+          >
+            <DiskIcon />
+            <span aria-hidden="true">{state.downloadStatus === 'working' ? 'Preparing…' : 'Image'}</span>
           </button>
-          {state.copySupported && (
+          <button
+            type="button"
+            className="pga-qr-button pga-qr-button-secondary pga-qr-action"
+            aria-label="Copy image"
+            aria-haspopup="menu"
+            aria-expanded={menu?.kind === 'copy'}
+            data-pga-qr-menu-trigger=""
+            disabled={!ready || copyBusy}
+            onClick={(event) => toggleFormatMenu(event, 'copy')}
+          >
+            {state.copyStatus === 'done' ? <CheckIcon /> : <CopyIcon />}
+            <span aria-hidden="true">{state.copyStatus === 'done' ? 'Copied!' : 'Image'}</span>
+          </button>
+          {linkUrl && (
             <button
               type="button"
-              className="pga-qr-button"
-              disabled={!ready || state.copyStatus === 'working' || state.copyStatus === 'done'}
-              onClick={state.copy}
+              className="pga-qr-button pga-qr-button-secondary pga-qr-action"
+              aria-label={`Copy ${linkLabel.toLowerCase()}`}
+              title={linkUrl}
+              onClick={copyLink}
             >
-              {state.copyStatus === 'done' ? 'Copied!' : 'Copy'}
+              {linkCopied ? <CheckIcon /> : <CopyIcon />}
+              <span aria-hidden="true">{linkCopied ? 'Copied!' : linkLabel}</span>
             </button>
           )}
         </div>
+        <span className="pga-qr-sr-only" role="status">
+          {announcement}
+        </span>
         {state.actionError && (
           <p className="pga-qr-error" role="alert">
             {state.actionError}
@@ -593,19 +657,8 @@ export function QrBuilder({
         )}
       </div>
 
-      {linkUrl && <CopyLink state={state} label={linkLabel} url={linkUrl} />}
-
       {menu && (
-        <QrContextMenu
-          x={menu.x}
-          y={menu.y}
-          label="QR code actions"
-          onClose={closeMenu}
-          items={[
-            ...(state.copySupported ? [{ label: 'Copy image', onSelect: state.copy }] : []),
-            { label: 'Download image', onSelect: state.download }
-          ]}
-        />
+        <QrContextMenu x={menu.x} y={menu.y} label={menu.label} items={menu.items} focusFirst={menu.focusFirst} onClose={closeMenu} />
       )}
     </div>
   )

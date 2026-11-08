@@ -34,6 +34,7 @@ export { QrRenderError, renderQrSvg } from './svg'
 export { logoToDataUri, withInlinedLogo, type InlineLogoOptions } from './assets'
 export {
   canCopyQr,
+  copyQrSvgToClipboard,
   copyQrToClipboard,
   copyTextToClipboard,
   downloadQr,

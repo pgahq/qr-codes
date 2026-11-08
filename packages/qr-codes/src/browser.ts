@@ -97,6 +97,16 @@ export async function copyQrToClipboard(
   ])
 }
 
+/** Copies the QR code to the clipboard as SVG markup (pastes into design tools and editors). */
+export async function copyQrSvgToClipboard(
+  input: QrContent | string,
+  appearance: QrAppearance = {},
+  raster: QrRasterOptions = {}
+): Promise<void> {
+  const inlined = await withInlinedLogo(appearance, raster.logo)
+  await copyTextToClipboard(renderQrSvg(input, inlined))
+}
+
 /** Copies text to the clipboard, falling back to a hidden textarea where the async API is unavailable (e.g. plain http). */
 export async function copyTextToClipboard(text: string): Promise<void> {
   if (

@@ -407,62 +407,32 @@
   cursor: default;
 }
 
-.pga-qr-link {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.pga-qr-link-button {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
+.pga-qr-action {
+  display: inline-flex;
   min-height: 40px;
-  padding: 6px 12px;
-  border: 1px solid var(--pga-qr-border);
-  border-radius: var(--pga-qr-radius);
-  background: var(--pga-qr-silver);
-  color: var(--pga-qr-navy);
-  font: inherit;
-  font-size: 0.875rem;
-  text-align: left;
-  cursor: pointer;
-}
-
-.pga-qr-link-button:hover {
-  border-color: var(--pga-qr-navy);
-}
-
-.pga-qr-link-button:focus-visible {
-  outline: 3px solid var(--pga-qr-focus);
-  outline-offset: 2px;
-}
-
-.pga-qr-link-text {
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   flex: 1;
+  padding: 0 12px;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  font-weight: 600;
 }
 
-.pga-qr-link-icon {
-  display: grid;
-  place-items: center;
+.pga-qr-action svg {
   flex: none;
-  color: var(--pga-qr-graphite);
 }
 
-.pga-qr-link-button:hover .pga-qr-link-icon,
-.pga-qr-link-icon[data-copied] {
-  color: var(--pga-qr-navy);
-}
-
-.pga-qr-link-status {
-  min-height: 1.25em;
-  color: var(--pga-qr-muted);
-  font-size: 0.8125rem;
+.pga-qr-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }

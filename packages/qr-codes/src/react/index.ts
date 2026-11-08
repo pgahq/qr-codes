@@ -9,6 +9,7 @@ export {
   useQrBuilder,
   type ActionStatus,
   type BuilderTab,
+  type ImageFormat,
   type LogoPreset,
   type QrBuilderEvent,
   type QrBuilderState,
