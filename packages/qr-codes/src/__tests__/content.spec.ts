@@ -68,10 +68,21 @@ describe('suggestCaption', () => {
     expect(suggestCaption({ type: 'url', url })).toBe(expected)
   })
 
-  it('cuts very long addresses with an ellipsis', () => {
-    const caption = suggestCaption({ type: 'url', url: 'https://www.pga.com/championship/tickets/general-admission-weekly-pass' })
+  it('drops middle path segments of long addresses and keeps the domain and the page', () => {
+    expect(suggestCaption({ type: 'url', url: 'https://vercel.com/pgahq/~/connect/browser/and-this-page' })).toBe(
+      'vercel.com/pgahq/~/\u2026/and-this-page'
+    )
+    expect(suggestCaption({ type: 'url', url: 'https://www.pga.com/championship/tickets/general/admission/weekly-pass' })).toBe(
+      'pga.com/championship/\u2026/weekly-pass'
+    )
+  })
+
+  it('falls back to a character-level middle ellipsis when a single segment is too long', () => {
+    const caption = suggestCaption({ type: 'url', url: 'https://www.pga.com/this-is-an-extremely-long-single-page-name-that-keeps-going' })
     expect(caption.length).toBeLessThanOrEqual(40)
-    expect(caption.endsWith('\u2026')).toBe(true)
+    expect(caption.startsWith('pga.com/this')).toBe(true)
+    expect(caption).toContain('\u2026')
+    expect(caption.endsWith('keeps-going')).toBe(true)
   })
 
   it('uses the network name for Wi-Fi and nothing for invalid or other content', () => {

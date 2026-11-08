@@ -82,10 +82,36 @@ export function normalizeUrl(input: string): string | null {
 
 export const SUGGESTED_CAPTION_MAX_LENGTH = 40
 
+const ELLIPSIS = '\u2026'
+
+function ellipsizeMiddle(text: string, max: number): string {
+  if (text.length <= max) return text
+  const head = Math.ceil((max - 1) * 0.55)
+  return `${text.slice(0, head).trimEnd()}${ELLIPSIS}${text.slice(text.length - (max - 1 - head)).trimStart()}`
+}
+
+/**
+ * Shortens "host/a/b/c/page" to fit by dropping path segments from the middle,
+ * keeping the domain, the first segments and the final page.
+ */
+function abbreviateAddress(host: string, segments: string[], max: number): string {
+  const full = [host, ...segments].join('/')
+  if (full.length <= max) return full
+  if (segments.length < 2) return ellipsizeMiddle(full, max)
+
+  const last = segments[segments.length - 1]
+  for (let keep = segments.length - 2; keep >= 0; keep--) {
+    const candidate = [host, ...segments.slice(0, keep), ELLIPSIS, last].join('/')
+    if (candidate.length <= max) return candidate
+  }
+  return ellipsizeMiddle(full, max)
+}
+
 /**
  * A short, human-friendly caption for content: "https://www.pga.com/a/b?x=1"
- * becomes "pga.com/a/b". Long paths are cut with an ellipsis. Returns "" when
- * there is nothing sensible to suggest.
+ * becomes "pga.com/a/b". Long addresses lose their middle path segments
+ * ("vercel.com/pgahq/\u2026/and-this-page") so the domain and the page stay
+ * visible. Returns "" when there is nothing sensible to suggest.
  */
 export function suggestCaption(content: QrContent): string {
   switch (content.type) {
@@ -93,11 +119,8 @@ export function suggestCaption(content: QrContent): string {
       const normalized = normalizeUrl(content.url)
       if (!normalized) return ''
       const { hostname, pathname } = new URL(normalized)
-      const path = pathname === '/' ? '' : pathname.replace(/\/+$/, '')
-      const label = `${hostname.replace(/^www\./, '')}${path}`
-      return label.length > SUGGESTED_CAPTION_MAX_LENGTH
-        ? `${label.slice(0, SUGGESTED_CAPTION_MAX_LENGTH - 1).trimEnd()}\u2026`
-        : label
+      const segments = pathname.split('/').filter(Boolean)
+      return abbreviateAddress(hostname.replace(/^www\./, ''), segments, SUGGESTED_CAPTION_MAX_LENGTH)
     }
     case 'wifi':
       return content.ssid.trim().slice(0, SUGGESTED_CAPTION_MAX_LENGTH)
