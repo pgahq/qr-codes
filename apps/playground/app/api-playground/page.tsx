@@ -39,10 +39,10 @@ const initial: Form = {
   size: '512',
   fg: '#00205B',
   bg: '#ffffff',
-  dotStyle: 'square',
-  cornerStyle: 'square',
+  dotStyle: 'fluid',
+  cornerStyle: 'fluid',
   caption: '',
-  logo: '',
+  logo: 'blue',
   method: 'GET'
 }
 
@@ -189,7 +189,7 @@ export default function ApiPlayground() {
             {text('bg', 'Background', 'color')}
             {select('dotStyle', 'Dot style', ['square', 'rounded', 'dots', 'fluid'])}
             {select('cornerStyle', 'Corner style', ['square', 'rounded', 'dot', 'fluid'])}
-            {select('logo', 'Logo preset', ['', 'blue', 'circle'])}
+            {select('logo', 'Logo preset', ['blue', 'circle', 'none'])}
             {text('caption', 'Caption')}
           </div>
 

@@ -80,15 +80,17 @@ curl -X POST https://example.com/api/qr -H 'content-type: application/json' \
 | `text` | up to 1000 characters | |
 | `format` | `svg`, `png` | `svg` |
 | `size` | 64-2048 px wide | `1024` |
-| `fg`, `bg` | hex, with or without `#` (`cornerSquareColor`, `cornerDotColor` also accepted) | `000000`, `ffffff` |
-| `dotStyle` | `square`, `rounded`, `dots`, `fluid` | `square` |
-| `cornerStyle` | `square`, `rounded`, `dot`, `fluid` | `square` |
-| `logo` | preset key (`blue`, `circle`) or an https URL on an allowed host | none |
+| `fg`, `bg` | hex, with or without `#` (`cornerSquareColor`, `cornerDotColor` also accepted) | `00205B` (PGA navy), `ffffff` |
+| `dotStyle` | `square`, `rounded`, `dots`, `fluid` | `fluid` |
+| `cornerStyle` | `square`, `rounded`, `dot`, `fluid` | `fluid` |
+| `logo` | preset key (`blue`, `circle`), an https URL on an allowed host, or `none` | `blue` |
 | `logoGrayscale` | `1` or `true` to render the logo without color | off |
 | `logoScale` | 0.1-0.3 of QR width | `0.22` |
-| `caption` | up to 80 characters | none |
+| `caption` | up to 80 characters; empty (`caption=`) for none | suggested from the content (the address, or the Wi-Fi name), as in the builder |
 | `errorCorrection` | `L`, `M`, `Q`, `H` | `H` with a logo, otherwise `M` |
 | `download`, `filename` | `download=1` sends `Content-Disposition: attachment` | |
+
+The defaults are the ones the builder opens with (Navy, Fluid, the blue PGA logo, a caption that follows the content) and come from `PGA_DEFAULT_APPEARANCE`. Pass `createQrHandler({ defaultAppearance: { ... }, autoCaption: false })` to change them; `defaultAppearance: {}` gives the plain black, square, logo-less code the handler used to produce.
 
 Errors are JSON: `400` for malformed requests, `422` for content or logo problems, `405` for other methods, `501` if PNG is requested without `@resvg/resvg-js` installed. Each has `{ "error": "...", "field": "..." }`.
 

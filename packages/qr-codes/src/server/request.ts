@@ -6,7 +6,7 @@ import {
   type ErrorCorrection,
   type QrAppearance
 } from '../appearance'
-import { encodeQrContent, type QrContent, type Result, type WifiSecurity } from '../content'
+import { encodeQrContent, suggestCaption, type QrContent, type Result, type WifiSecurity } from '../content'
 
 export type QrFormat = 'svg' | 'png'
 
@@ -23,7 +23,14 @@ export interface QrRequest {
 export interface ParseOptions {
   /** Named logos callers may reference as `logo=<key>`. */
   logoPresets?: Readonly<Record<string, string>>
+  /** Applied under whatever the request sets. `logo=none` removes its logo. */
   defaultAppearance?: QrAppearance
+  /**
+   * Caption the code with `suggestCaption(content)` (the builder's default: the
+   * address, or the Wi-Fi name) when the request has no `caption`. `caption=`
+   * (empty) turns it off. Default false here; `createQrHandler` turns it on.
+   */
+  autoCaption?: boolean
   /** When false, `logo` must be a preset key (no arbitrary URLs / data URIs). Default true. */
   allowCustomLogo?: boolean
 }
@@ -115,15 +122,19 @@ export function parseQrRequest(params: Params, options: ParseOptions = {}): Resu
   const logoScale = numeric('logoScale')
   if (logoScale === null) return fail('logoScale must be a number.', 'logoScale')
 
-  const caption = str(params, 'caption')
+  const explicitCaption = str(params, 'caption')
+  const captionOff = params.caption === ''
+  const caption =
+    explicitCaption ?? (options.autoCaption && !captionOff ? suggestCaption(content) || undefined : undefined)
   const logoGrayscale = bool(params, 'logoGrayscale')
-  if (caption !== undefined && caption.length > CAPTION_MAX_LENGTH) {
+  if (explicitCaption !== undefined && explicitCaption.length > CAPTION_MAX_LENGTH) {
     return fail(`caption must be ${CAPTION_MAX_LENGTH} characters or fewer.`, 'caption')
   }
 
   let logoSrc: string | undefined
   const logoParam = str(params, 'logo')
-  if (logoParam !== undefined) {
+  const logoRemoved = logoParam === 'none'
+  if (logoParam !== undefined && !logoRemoved) {
     const preset = options.logoPresets?.[logoParam]
     if (preset) {
       logoSrc = preset
@@ -146,8 +157,18 @@ export function parseQrRequest(params: Params, options: ParseOptions = {}): Resu
     ...(str(params, 'fg', 'foreground') && { foreground: hexColor(str(params, 'fg', 'foreground')) }),
     ...(str(params, 'bg', 'background') && { background: hexColor(str(params, 'bg', 'background')) }),
     ...(str(params, 'cornerSquareColor') && { cornerSquareColor: hexColor(str(params, 'cornerSquareColor')) }),
-    ...(str(params, 'cornerDotColor') && { cornerDotColor: hexColor(str(params, 'cornerDotColor')) }),
-    ...(logoSrc && { logo: { src: logoSrc, ...(logoScale !== undefined && { scale: logoScale }), ...(logoGrayscale && { grayscale: true }) } })
+    ...(str(params, 'cornerDotColor') && { cornerDotColor: hexColor(str(params, 'cornerDotColor')) })
+  }
+
+  const baseLogo = logoSrc ? { src: logoSrc } : logoRemoved ? undefined : options.defaultAppearance?.logo
+  if (baseLogo) {
+    appearance.logo = {
+      ...baseLogo,
+      ...(logoScale !== undefined && { scale: logoScale }),
+      ...(logoGrayscale && { grayscale: true })
+    }
+  } else {
+    delete appearance.logo
   }
 
   return {
@@ -157,7 +178,7 @@ export function parseQrRequest(params: Params, options: ParseOptions = {}): Resu
       payload: encoded.value,
       appearance,
       format: format ?? 'svg',
-      filename: (str(params, 'filename') ?? caption ?? 'PGA-qr-code').replace(/[\\/:*?"<>|\r\n]+/g, '-').slice(0, 100),
+      filename: (str(params, 'filename') ?? explicitCaption ?? 'PGA-qr-code').replace(/[\\/:*?"<>|\r\n]+/g, '-').slice(0, 100),
       download: bool(params, 'download')
     }
   }
