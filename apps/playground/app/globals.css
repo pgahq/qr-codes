@@ -265,3 +265,71 @@ pre {
   height: 20px;
   padding: 0;
 }
+
+.default-card {
+  display: grid;
+  gap: 24px;
+  align-items: center;
+  border: 2px solid var(--navy);
+  box-shadow: 0 0 0 4px rgba(0, 32, 91, 0.08);
+}
+
+@media (min-width: 720px) {
+  .default-card {
+    grid-template-columns: minmax(0, 280px) minmax(0, 1fr);
+  }
+}
+
+.default-card h2 {
+  margin: 6px 0 0;
+  font-size: 1.25rem;
+}
+
+.default-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.default-card .pga-qr-code {
+  max-width: 280px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--navy);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.settings {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.settings div {
+  display: flex;
+  gap: 12px;
+  font-size: 0.9rem;
+}
+
+.settings dt {
+  min-width: 5.5rem;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.settings dd {
+  margin: 0;
+}
+
+.section-title {
+  margin: 8px 0 0;
+  font-size: 1rem;
+  color: var(--navy);
+}
