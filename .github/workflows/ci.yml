@@ -37,3 +37,20 @@ jobs:
 
       - name: Check the package contents
         run: npm pack --dry-run -w @pgahq/qr-codes
+
+      - name: Check that a git install works
+        run: |
+          node scripts/git-release.mjs --tag ci-git-install
+          dir="$(mktemp -d)"
+          cd "$dir"
+          npm init -y > /dev/null
+          npm install --no-audit --no-fund "git+file://${GITHUB_WORKSPACE}#ci-git-install"
+          test -d node_modules/@pgahq/qr-codes/dist
+          test ! -e node_modules/next
+          node --input-type=module -e "
+            for (const entry of ['.', './react', './server', './styles.css']) {
+              console.log(entry, '->', import.meta.resolve('@pgahq/qr-codes' + entry.slice(1)))
+            }
+            const { renderQrSvg } = await import('@pgahq/qr-codes')
+            if (!renderQrSvg({ type: 'url', url: 'pga.com' }).startsWith('<svg')) throw new Error('render failed')
+          "

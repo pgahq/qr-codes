@@ -1,6 +1,7 @@
 name: Publish
 
-# Publishes @pgahq/qr-codes to GitHub Packages (https://github.com/orgs/pgahq/packages).
+# Publishes @pgahq/qr-codes to GitHub Packages (https://github.com/orgs/pgahq/packages)
+# and pushes a built git-v<version> tag that can be installed over SSH without a registry token.
 #
 # Release flow:
 #   1. Bump "version" in packages/qr-codes/package.json and merge to main.
@@ -13,7 +14,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write # pushes the git-v<version> tag
   packages: write
 
 concurrency:
@@ -55,6 +56,16 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      # Before the registry publish so a re-run after a failure is safe: an existing git tag is skipped,
+      # while a version already on the registry cannot be published twice.
+      - name: Build the git-install tag (pushed only for release tags)
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            node scripts/git-release.mjs --push
+          else
+            node scripts/git-release.mjs --tag "dry-run-${GITHUB_RUN_ID}"
+          fi
 
       - name: Publish
         working-directory: ${{ env.PACKAGE_DIR }}
