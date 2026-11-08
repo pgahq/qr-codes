@@ -27,9 +27,9 @@ For a repo that installs it in CI, grant that repo access under the package's "M
 Every release also gets a `git-v<version>` tag whose root is the built package (`dist/` included, named `@pgahq/qr-codes`), so it installs like any other private git dependency:
 
 ```bash
-bun add git+ssh://git@github.com/pgahq/qr-codes#git-v0.1.5
+bun add git+ssh://git@github.com/pgahq/qr-codes#git-v0.2.0
 # or
-npm install git+ssh://git@github.com/pgahq/qr-codes#git-v0.1.5
+npm install git+ssh://git@github.com/pgahq/qr-codes#git-v0.2.0
 ```
 
 This needs SSH access to `github.com/pgahq/qr-codes`: a developer's own key, or a read-only deploy key on this repo for CI (Settings > Deploy keys; load the private half into the CI job's SSH agent). Pin a `git-v<version>` tag or the commit it resolves to. Do not pin `v<version>` or a branch: those contain the monorepo source and no `dist/`, and a git install does not build.
