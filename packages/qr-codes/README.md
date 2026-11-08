@@ -76,7 +76,7 @@ curl -X POST https://example.com/api/qr -H 'content-type: application/json' \
 | `type` | `url`, `wifi`, `sms`, `text` | `url` |
 | `url` | http(s) URL; a bare `pga.org` becomes `https://pga.org/` | |
 | `ssid`, `password`, `security` (`WPA`, `WEP`, `nopass`), `hidden` | Wi-Fi | `security=WPA` |
-| `phone`, `message` | SMS (message up to 159 characters) | |
+| `phone`, `message` | SMS (message up to 159 characters). Numbers without a country code get +1 (US/Canada) | |
 | `text` | up to 1000 characters | |
 | `format` | `svg`, `png` | `svg` |
 | `size` | 64-2048 px wide | `1024` |

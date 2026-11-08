@@ -49,6 +49,18 @@ describe('encodeQrContent', () => {
     expect(encodeQrContent({ type: 'sms', phone: '800' })).toMatchObject({ ok: true, value: 'smsto:800' })
   })
 
+  it('adds the US/Canada country code to numbers typed without one', () => {
+    expect(normalizePhone('(800) 555-1212')).toBe('+18005551212')
+    expect(normalizePhone('800-555-1212')).toBe('+18005551212')
+    expect(normalizePhone('1 800 555 1212')).toBe('+18005551212')
+    expect(normalizePhone('+44 20 7946 0958')).toBe('+442079460958')
+    expect(normalizePhone('800')).toBe('800')
+    expect(normalizePhone('555-1212')).toBe('5551212')
+    expect(encodeQrContent({ type: 'sms', phone: '8005551212', message: 'Hi' })).toMatchObject({
+      value: 'smsto:+18005551212:Hi'
+    })
+  })
+
   it('keeps line breaks in sms messages by percent-encoding the body', () => {
     expect(encodeQrContent({ type: 'sms', phone: '+1 (800) 555-1212', message: 'Hi!\r\nSee you at 5.\n\nThanks' })).toEqual({
       ok: true,

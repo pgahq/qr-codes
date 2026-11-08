@@ -134,9 +134,18 @@ export function escapeWifiField(value: string): string {
   return value.replace(/([\\;,:"])/g, '\\$1')
 }
 
+/**
+ * Returns the number in international form. Numbers typed without a country
+ * code are assumed to be US/Canada (+1): 10 digits, or 11 starting with 1.
+ * Other digit-only values (short codes such as 800) are left as typed.
+ */
 export function normalizePhone(input: string): string | null {
   const compact = input.replace(/[\s().-]/g, '')
-  return /^\+?\d{3,15}$/.test(compact) ? compact : null
+  if (!/^\+?\d{3,15}$/.test(compact)) return null
+  if (compact.startsWith('+')) return compact
+  if (/^\d{10}$/.test(compact)) return `+1${compact}`
+  if (/^1\d{10}$/.test(compact)) return `+${compact}`
+  return compact
 }
 
 /**
@@ -171,7 +180,7 @@ export function encodeQrContent(content: QrContent): Result<string> {
     case 'sms': {
       const phone = normalizePhone(content.phone)
       if (!phone) {
-        return fail('Enter a phone number, e.g. +18005551212.', 'phone')
+        return fail('Enter a valid phone number.', 'phone')
       }
       const message = normalizePunctuation((content.message ?? '').replace(/\r\n?/g, '\n'))
       if (message.length > SMS_MESSAGE_MAX_LENGTH) {

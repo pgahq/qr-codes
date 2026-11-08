@@ -8,7 +8,7 @@ import {
   type ChangeEvent,
   type KeyboardEvent,
   type MouseEvent,
-  type ReactNode
+  type ReactNode,
 } from 'react'
 import { CAPTION_MAX_LENGTH } from '../appearance'
 import { SMS_MESSAGE_MAX_LENGTH } from '../content'
@@ -48,13 +48,13 @@ export interface QrBuilderProps extends UseQrBuilderOptions {
 const TABS: { id: BuilderTab; label: string }[] = [
   { id: 'url', label: 'Open webpage' },
   { id: 'wifi', label: 'Join Wi-Fi' },
-  { id: 'sms', label: 'Send a text' }
+  { id: 'sms', label: 'Send a text' },
 ]
 
 const TAB_BLURB: Record<BuilderTab, string> = {
   url: 'Scan the QR code to open your URL without typing.',
   wifi: 'Scan the QR code to connect to your Wi-Fi network.',
-  sms: 'Scan the QR code to draft a text message you specify.'
+  sms: 'Scan the QR code to draft a text message you specify.',
 }
 
 function Field({
@@ -63,7 +63,7 @@ function Field({
   error,
   hint,
   id,
-  children
+  children,
 }: {
   label: string
   required?: boolean
@@ -278,19 +278,13 @@ function ContentFields({ state, idPrefix, captionField }: { state: QrBuilderStat
   return (
     <>
       <FieldRow>
-        <Field
-          id={`${idPrefix}-phone`}
-          label="Your phone number"
-          required
-          error={errorFor('phone')}
-          hint="Include the country code, e.g. +18005551212."
-        >
+        <Field id={`${idPrefix}-phone`} label="Your phone number" required error={errorFor('phone')}>
           <input
             id={`${idPrefix}-phone`}
             className="pga-qr-input"
             type="tel"
             autoComplete="off"
-            placeholder="+18005551212"
+            placeholder="(800) 555-1212"
             value={sms.phone}
             aria-describedby={`${idPrefix}-phone-msg`}
             onChange={(event) => state.setSms({ ...sms, phone: event.target.value })}
@@ -336,7 +330,7 @@ function NoLogoIcon() {
 function LogoPicker({
   state,
   allowUpload,
-  onUploadLogo
+  onUploadLogo,
 }: {
   state: QrBuilderState
   allowUpload: boolean
@@ -563,8 +557,8 @@ export function QrBuilder({
       focusFirst: event.detail === 0,
       items: [
         { label: 'SVG', onSelect: () => run('svg') },
-        { label: kind === 'copy' ? pngCopyLabel : 'PNG', onSelect: () => run('png'), disabled: kind === 'copy' && !state.copySupported }
-      ]
+        { label: kind === 'copy' ? pngCopyLabel : 'PNG', onSelect: () => run('png'), disabled: kind === 'copy' && !state.copySupported },
+      ],
     })
   }
 
@@ -581,8 +575,8 @@ export function QrBuilder({
         { label: 'Copy PNG', onSelect: () => state.copy('png'), disabled: !state.copySupported },
         { label: 'Copy SVG', onSelect: () => state.copy('svg') },
         { label: 'Download PNG', onSelect: () => state.download('png') },
-        { label: 'Download SVG', onSelect: () => state.download('svg') }
-      ]
+        { label: 'Download SVG', onSelect: () => state.download('svg') },
+      ],
     })
   }
 
