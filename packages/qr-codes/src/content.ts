@@ -173,12 +173,16 @@ export function encodeQrContent(content: QrContent): Result<string> {
       if (!phone) {
         return fail('Enter a phone number, e.g. +18005551212.', 'phone')
       }
-      const message = normalizePunctuation(content.message ?? '')
+      const message = normalizePunctuation((content.message ?? '').replace(/\r\n?/g, '\n'))
       if (message.length > SMS_MESSAGE_MAX_LENGTH) {
         return fail(
           `Message must be ${SMS_MESSAGE_MAX_LENGTH} characters or fewer.`,
           'message'
         )
+      }
+      if (message.includes('\n')) {
+        // smsto: has no way to escape line breaks; a percent-encoded body does.
+        return ok(`sms:${phone}?&body=${encodeURIComponent(message)}`)
       }
       return ok(message ? `smsto:${phone}:${message}` : `smsto:${phone}`)
     }

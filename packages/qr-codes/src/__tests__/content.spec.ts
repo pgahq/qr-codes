@@ -49,6 +49,16 @@ describe('encodeQrContent', () => {
     expect(encodeQrContent({ type: 'sms', phone: '800' })).toMatchObject({ ok: true, value: 'smsto:800' })
   })
 
+  it('keeps line breaks in sms messages by percent-encoding the body', () => {
+    expect(encodeQrContent({ type: 'sms', phone: '+1 (800) 555-1212', message: 'Hi!\r\nSee you at 5.\n\nThanks' })).toEqual({
+      ok: true,
+      value: 'sms:+18005551212?&body=Hi!%0ASee%20you%20at%205.%0A%0AThanks'
+    })
+    expect(encodeQrContent({ type: 'sms', phone: '+18005551212', message: 'one line' })).toMatchObject({
+      value: 'smsto:+18005551212:one line'
+    })
+  })
+
   it('validates sms input', () => {
     expect(encodeQrContent({ type: 'sms', phone: 'abc' })).toMatchObject({ ok: false, field: 'phone' })
     expect(encodeQrContent({ type: 'sms', phone: '+18005551212', message: 'x'.repeat(160) })).toMatchObject({

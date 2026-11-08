@@ -36,6 +36,11 @@ describe('renderQrSvg', () => {
     ['url', { type: 'url', url: 'https://www.pga.org/' }, 'https://www.pga.org/'],
     ['wifi', { type: 'wifi', ssid: 'Club', password: 'secret', security: 'WPA' }, 'WIFI:T:WPA;S:Club;P:secret;;'],
     ['sms', { type: 'sms', phone: '+18005551212', message: 'Hi' }, 'smsto:+18005551212:Hi'],
+    [
+      'sms with line breaks',
+      { type: 'sms', phone: '+18005551212', message: 'Hi!\nSee you at 5.' },
+      'sms:+18005551212?&body=Hi!%0ASee%20you%20at%205.'
+    ],
     ['rounded dots', { type: 'url', url: 'pga.org' }, 'https://pga.org/', { dotStyle: 'rounded', cornerStyle: 'rounded' }],
     ['round dots', { type: 'url', url: 'pga.org' }, 'https://pga.org/', { dotStyle: 'dots', cornerStyle: 'dot' }],
     ['fluid', { type: 'url', url: 'pga.org' }, 'https://pga.org/', { dotStyle: 'fluid', cornerStyle: 'fluid' }],

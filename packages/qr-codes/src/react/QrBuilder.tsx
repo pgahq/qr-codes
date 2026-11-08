@@ -300,10 +300,10 @@ function ContentFields({ state, idPrefix, captionField }: { state: QrBuilderStat
         {captionField}
       </FieldRow>
       <Field id={`${idPrefix}-message`} label="Custom message" error={errorFor('message')}>
-        <input
+        <textarea
           id={`${idPrefix}-message`}
-          className="pga-qr-input"
-          type="text"
+          className="pga-qr-input pga-qr-textarea"
+          rows={2}
           placeholder="Your SMS text"
           maxLength={SMS_MESSAGE_MAX_LENGTH}
           value={sms.message}

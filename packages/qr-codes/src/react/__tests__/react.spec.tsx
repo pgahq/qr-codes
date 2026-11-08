@@ -370,6 +370,18 @@ describe('<QrBuilder />', () => {
     })
   })
 
+  describe('sms message', () => {
+    it('is a multi-line field and Enter inserts a line break', async () => {
+      const { user } = setup({ defaultTab: 'sms' })
+      await user.type(screen.getByLabelText(/Your phone number/), '+18005551212')
+      const message = screen.getByLabelText('Custom message') as HTMLTextAreaElement
+      expect(message.tagName).toBe('TEXTAREA')
+      await user.type(message, 'Hi!{Enter}See you at 5.')
+      expect(message.value).toBe('Hi!\nSee you at 5.')
+      expect(screen.getByRole('img', { name: /./ })).toBeTruthy()
+    })
+  })
+
   describe('autoFocus', () => {
     it('does not take focus by default', () => {
       setup()

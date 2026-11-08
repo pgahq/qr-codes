@@ -130,6 +130,13 @@
   font: inherit;
 }
 
+.pga-qr-textarea {
+  min-height: 68px;
+  padding-top: 8px;
+  resize: vertical;
+  line-height: 1.4;
+}
+
 .pga-qr-input::placeholder {
   color: #97999b;
   opacity: 1;
