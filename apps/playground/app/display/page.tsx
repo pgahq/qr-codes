@@ -10,8 +10,8 @@ interface Example {
 
 const examples: Example[] = [
   {
-    title: 'Plain URL',
-    note: "Defaults: black on white, square modules. Bare 'pga.org' is normalized to https.",
+    title: 'Default',
+    note: 'Black on white, square modules.',
     content: { type: 'url', url: 'pga.org' }
   },
   {
@@ -49,35 +49,6 @@ const examples: Example[] = [
     note: 'Light modules on navy. Many scanners need dark-on-light, so test before shipping this.',
     content: { type: 'url', url: 'https://www.pga.org/' },
     appearance: { foreground: '#ffffff', background: '#00205B' }
-  },
-  {
-    title: 'Wi-Fi',
-    note: 'Special characters in the SSID and password are escaped per the Wi-Fi QR format.',
-    content: { type: 'wifi', ssid: 'Club;House', password: 'p:ssw,rd', security: 'WPA' },
-    appearance: { foreground: '#00205B', caption: 'Guest Wi-Fi' }
-  },
-  {
-    title: 'Open Wi-Fi (hidden)',
-    note: 'security: nopass, hidden: true. No password is encoded.',
-    content: { type: 'wifi', ssid: 'Guest', security: 'nopass', hidden: true },
-    appearance: { foreground: '#00205B' }
-  },
-  {
-    title: 'SMS',
-    note: 'Pre-fills a text message. Smart quotes are normalized.',
-    content: { type: 'sms', phone: '+1 (800) 555-1212', message: 'I\u2019d like tee times' },
-    appearance: { foreground: '#00205B' }
-  },
-  {
-    title: 'Plain text',
-    note: 'Any text, up to 1000 characters.',
-    content: { type: 'text', text: 'PGA of America' },
-    appearance: { foreground: '#00205B' }
-  },
-  {
-    title: 'Invalid content',
-    note: 'Invalid input renders the fallback instead of throwing.',
-    content: { type: 'url', url: 'javascript:alert(1)' }
   }
 ]
 
@@ -97,11 +68,7 @@ export default function DisplayPage() {
         {examples.map((example) => (
           <section key={example.title} className="card tile">
             <h2>{example.title}</h2>
-            <QrCode
-              content={example.content}
-              appearance={{ size: 512, ...example.appearance }}
-              fallback={<div className="preview error">Not a valid URL, nothing rendered.</div>}
-            />
+            <QrCode content={example.content} appearance={{ size: 512, ...example.appearance }} />
             <p>{example.note}</p>
           </section>
         ))}
