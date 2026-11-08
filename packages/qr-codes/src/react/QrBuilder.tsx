@@ -26,21 +26,6 @@ const TABS: { id: BuilderTab; label: string }[] = [
   { id: 'sms', label: 'Send a text' }
 ]
 
-const TAB_COPY: Record<BuilderTab, { subtitle: string; description: string }> = {
-  url: {
-    subtitle: 'Quickly share any webpage:',
-    description: "When someone scans the QR code from their phone, it'll open their browser to the page / URL you specify."
-  },
-  wifi: {
-    subtitle: 'A quick way to share your Wi-Fi network:',
-    description: "When someone scans the QR code from their phone, it'll connect their phone to Wi-Fi."
-  },
-  sms: {
-    subtitle: 'Quickly send a text message:',
-    description: "When someone scans the QR code from their phone, it'll pre-fill a text message to the phone number you specify."
-  }
-}
-
 function Field({
   label,
   required,
@@ -376,7 +361,6 @@ export function QrBuilder({ className, onUploadLogo, allowLogoUpload = true, pla
   const idPrefix = useId()
   const state = useQrBuilder(options)
   const ready = !!state.qr.svg
-  const copy = TAB_COPY[state.tab]
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
   const closeMenu = useCallback(() => setMenu(null), [])
 
@@ -406,9 +390,6 @@ export function QrBuilder({ className, onUploadLogo, allowLogoUpload = true, pla
         <Tabs state={state} idPrefix={idPrefix} />
 
         <div role="tabpanel" id={`${idPrefix}-panel`} aria-labelledby={`${idPrefix}-tab-${state.tab}`} className="pga-qr-panel">
-          <p className="pga-qr-description">
-            <strong>{copy.subtitle}</strong> {copy.description}
-          </p>
           <ContentFields key={state.tab} state={state} idPrefix={idPrefix} captionField={captionField} />
         </div>
 

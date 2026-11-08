@@ -89,17 +89,6 @@
   color: #fff;
 }
 
-.pga-qr-description {
-  margin: 0;
-  color: var(--pga-qr-muted);
-  font-size: 0.875rem;
-}
-
-.pga-qr-description strong {
-  color: var(--pga-qr-navy);
-}
-
-.pga-qr-hint,
 .pga-qr-hint {
   margin: 0;
   color: var(--pga-qr-muted);
