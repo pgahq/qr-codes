@@ -1,31 +1,25 @@
 'use client'
 
-import { PGA_LOGOS } from '@pgahq/qr-codes'
-import { QrBuilder, type QrBuilderEvent, type QrBuilderState } from '@pgahq/qr-codes/react'
+import type { QrAppearance, QrContent } from '@pgahq/qr-codes'
+import { QrBuilder, type QrBuilderEvent } from '@pgahq/qr-codes/react'
 import { useState } from 'react'
+import { CodeBlock } from '../code-block'
+import { apiSnippet, coreSnippet, imageLink, reactSnippet } from '../code-snippets'
 
-/** URL of the same code from this app's /api/qr route (URL codes only, since GET links should not carry secrets). */
-function apiImageLink(state: QrBuilderState): string | null {
-  if (typeof window === 'undefined' || state.tab !== 'url' || !state.qr.payload) return null
-  const { foreground = '#000000', dotStyle = 'square', cornerStyle = 'square', caption, logo } = state.appearance
-  const params = new URLSearchParams({
-    url: state.qr.payload,
-    format: 'png',
-    fg: foreground.replace('#', ''),
-    dotStyle,
-    cornerStyle
-  })
-  if (caption) params.set('caption', caption)
-  const preset = Object.entries(PGA_LOGOS).find(([, value]) => value.src === logo?.src)?.[0]
-  if (preset) {
-    params.set('logo', preset)
-    if (logo?.grayscale) params.set('logoGrayscale', '1')
-  }
-  return `${window.location.origin}/api/qr?${params}`
+function Snippet({ title, code }: { title: string; code: string }) {
+  return (
+    <div className="stack">
+      <strong>{title}</strong>
+      <CodeBlock code={code} label={title} />
+    </div>
+  )
 }
 
 export default function BuilderPage() {
   const [events, setEvents] = useState<string[]>([])
+  const [snapshot, setSnapshot] = useState<{ content: QrContent; appearance: QrAppearance } | null>(null)
+
+  const link = snapshot ? imageLink(snapshot.content, snapshot.appearance, window.location.origin) : null
 
   const onEvent = (event: QrBuilderEvent) =>
     setEvents((prev) => [`${new Date().toLocaleTimeString()}  ${JSON.stringify(event)}`, ...prev].slice(0, 20))
@@ -41,7 +35,43 @@ export default function BuilderPage() {
       </div>
 
       <div className="card">
-        <QrBuilder autoFocus onEvent={onEvent} link={apiImageLink} />
+        <QrBuilder
+          autoFocus
+          onEvent={onEvent}
+          onChange={setSnapshot}
+          link={(state) =>
+            typeof window === 'undefined' ? null : imageLink(state.content, state.appearance, window.location.origin)
+          }
+        />
+      </div>
+
+      <div className="card stack">
+        <div>
+          <h2 className="section-title">Code for this QR code</h2>
+          <p className="muted">Updates as you change the builder above.</p>
+        </div>
+        {snapshot && (
+          <>
+            <Snippet title={'React: <QrCode />'} code={reactSnippet(snapshot.content, snapshot.appearance)} />
+            <Snippet title="Core: renderQrSvg" code={coreSnippet(snapshot.content, snapshot.appearance)} />
+            <Snippet
+              title="API: POST /api/qr"
+              code={apiSnippet(snapshot.content, snapshot.appearance, `${window.location.origin}/api/qr`)}
+            />
+            <div className="stack">
+              <strong>Link button URL</strong>
+              {link ? (
+                <CodeBlock code={link} label="Link button URL" />
+              ) : (
+                <p className="muted">
+                  {snapshot.content.type === 'url'
+                    ? 'Enter a valid URL to get a link.'
+                    : 'The link is only available for URL codes. Use the POST request above for Wi-Fi and text codes.'}
+                </p>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       <div className="card">
