@@ -55,6 +55,16 @@ describe('<QrBuilder />', () => {
     await user.type(input, value)
   }
 
+  it('reports the rendered content and appearance through onChange', async () => {
+    const onChange = vi.fn()
+    const { user } = setup({ onChange })
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ content: { type: 'url', url: '' } }))
+    await replaceUrl(user, 'pga.org')
+    const last = onChange.mock.calls.at(-1)?.[0]
+    expect(last.content).toEqual({ type: 'url', url: 'pga.org' })
+    expect(last.appearance).toMatchObject({ foreground: '#00205B', dotStyle: 'fluid', caption: 'pga.org' })
+  })
+
   const choose = async (user: ReturnType<typeof userEvent.setup>, button: string, format: 'SVG' | 'PNG') => {
     await user.click(screen.getByRole('button', { name: button }))
     await user.click(await screen.findByRole('menuitem', { name: new RegExp(`^${format}`) }))
