@@ -7,8 +7,8 @@ const demos = [
     body: '<QrBuilder /> from @pgahq/qr-codes/react: URL, Wi-Fi and SMS codes with logo, caption, download and copy.'
   },
   {
-    href: '/display',
-    title: 'Display',
+    href: '/examples',
+    title: 'Examples',
     body: '<QrCode /> rendered on the server with different content types, colors, styles, logos and captions.'
   },
   {

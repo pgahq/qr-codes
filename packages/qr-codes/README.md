@@ -113,6 +113,7 @@ import { QrBuilder, QrCode } from '@pgahq/qr-codes/react'
 <QrCode content={{ type: 'url', url: 'pga.org' }} appearance={{ caption: 'Scan me', size: 512 }} />
 ```
 
+- `onChange({ content, appearance })` fires on mount and whenever what the builder renders changes. The values are the inputs to `<QrCode />` and `renderQrSvg`, so a host page can show matching code or keep its own state in sync.
 - `onEvent` receives `start`, `download`, `copy` and `copy-link`, replacing the old hard-coded Google Tag Manager calls. Wire them to GTM, Amplitude, or nothing.
 - `onUploadLogo(file) => Promise<url>` replaces the Cloudinary widget. Without it, uploads are shrunk to 256px and stay in the browser as data URIs.
 - Users can keep up to 5 uploaded logos (add with the `+` tile, remove with the `x` on a tile). They are saved in `localStorage` under `pgahq:qr-codes:custom-logos`; set `storageKey` to change the key or `null` to disable saving. Stored values are validated on load (png/jpeg/webp/gif data URIs and https URLs only).

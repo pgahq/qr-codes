@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { QrBuilder } from '../QrBuilder'
 import { QrCode } from '../QrCode'
@@ -54,6 +55,42 @@ describe('<QrBuilder />', () => {
     await user.clear(input)
     await user.type(input, value)
   }
+
+  it('reports the rendered content and appearance through onChange', async () => {
+    const onChange = vi.fn()
+    const { user } = setup({ onChange })
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ content: { type: 'url', url: '' } }))
+    await replaceUrl(user, 'pga.org')
+    const last = onChange.mock.calls.at(-1)?.[0]
+    expect(last.content).toEqual({ type: 'url', url: 'pga.org' })
+    expect(last.appearance).toMatchObject({ foreground: '#00205B', dotStyle: 'fluid', caption: 'pga.org' })
+  })
+
+  it('does not loop when the host passes an inline appearance and stores the change in state', async () => {
+    const seen: unknown[] = []
+    function Host() {
+      const [value, setValue] = useState<unknown>(null)
+      return (
+        <>
+          <QrBuilder
+            appearance={{ size: 512 }}
+            onChange={(next) => {
+              seen.push(next)
+              setValue(next)
+            }}
+          />
+          <output data-testid="has-value">{value ? 'yes' : 'no'}</output>
+        </>
+      )
+    }
+    const user = userEvent.setup()
+    render(<Host />)
+    await waitFor(() => expect(screen.getByTestId('has-value').textContent).toBe('yes'))
+    expect(seen).toHaveLength(1)
+    await user.type(screen.getByLabelText(/^URL/), 'pga.org')
+    expect(seen.length).toBeGreaterThan(1)
+    expect(seen.length).toBeLessThan(20)
+  })
 
   const choose = async (user: ReturnType<typeof userEvent.setup>, button: string, format: 'SVG' | 'PNG') => {
     await user.click(screen.getByRole('button', { name: button }))

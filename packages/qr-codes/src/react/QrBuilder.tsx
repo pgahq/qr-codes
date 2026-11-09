@@ -10,8 +10,8 @@ import {
   type MouseEvent,
   type ReactNode,
 } from 'react'
-import { CAPTION_MAX_LENGTH } from '../appearance'
-import { SMS_MESSAGE_MAX_LENGTH } from '../content'
+import { CAPTION_MAX_LENGTH, type QrAppearance } from '../appearance'
+import { SMS_MESSAGE_MAX_LENGTH, type QrContent } from '../content'
 import { renderQrSvg } from '../svg'
 import { readLogoFile } from './logoFile'
 import { QrContextMenu, type QrContextMenuItem } from './QrContextMenu'
@@ -43,6 +43,11 @@ export interface QrBuilderProps extends UseQrBuilderOptions {
   link?: string | ((state: QrBuilderState) => string | null | undefined)
   /** Text on the link button. Default: "Link". */
   linkLabel?: string
+  /**
+   * Called on mount and whenever the content or appearance the builder renders changes, so a host page can
+   * show matching code or sync its own state. The values are the exact inputs to `renderQrSvg` / `<QrCode />`.
+   */
+  onChange?: (value: { content: QrContent; appearance: QrAppearance }) => void
 }
 
 const TABS: { id: BuilderTab; label: string }[] = [
@@ -548,10 +553,23 @@ export function QrBuilder({
   placeholder,
   link,
   linkLabel = 'Link',
+  onChange,
   ...options
 }: QrBuilderProps) {
   const idPrefix = useId()
   const state = useQrBuilder(options)
+  const onChangeRef = useRef(onChange)
+  onChangeRef.current = onChange
+  const { content: currentContent, appearance: currentAppearance } = state
+  const lastChange = useRef<string>(undefined)
+  useEffect(() => {
+    // Compare by value: a host that passes an inline `appearance` gets a new object every render, and would
+    // otherwise loop when `onChange` stores the value in state.
+    const key = JSON.stringify([currentContent, currentAppearance])
+    if (key === lastChange.current) return
+    lastChange.current = key
+    onChangeRef.current?.({ content: currentContent, appearance: currentAppearance })
+  }, [currentContent, currentAppearance])
   const ready = !!state.qr.svg
   const linkUrl = typeof link === 'function' ? link(state) : link
   const [menu, setMenu] = useState<{

@@ -5,7 +5,7 @@
 | Path | What it is |
 | --- | --- |
 | `packages/qr-codes` | the published package. See its [README](packages/qr-codes/README.md) for install, usage and the API. |
-| `apps/playground` | Next.js app that exercises the package: builder, display examples, and `/api/qr`. Not published. |
+| `apps/playground` | Next.js app that exercises the package: builder, examples, and `/api/qr`. Not published. |
 
 ```bash
 npm ci

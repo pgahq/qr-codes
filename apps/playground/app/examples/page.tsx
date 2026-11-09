@@ -1,5 +1,7 @@
 import { PGA_DEFAULT_APPEARANCE, PGA_LOGOS, type QrAppearance, type QrContent } from '@pgahq/qr-codes'
 import { QrCode } from '@pgahq/qr-codes/react'
+import { CodeBlock } from '../code-block'
+import { reactSnippet, toSource } from '../code-snippets'
 
 interface Example {
   title: string
@@ -10,6 +12,8 @@ interface Example {
 
 const defaultContent: QrContent = { type: 'url', url: 'https://pga.com/qr-code' }
 const defaultCaption = 'Make a QR code on PGA.com'
+
+const defaultAppearance: QrAppearance = { size: 512, ...PGA_DEFAULT_APPEARANCE, caption: defaultCaption }
 
 const defaultSettings = [
   ['Color', 'Navy (#00205B) on white'],
@@ -62,11 +66,11 @@ const examples: Example[] = [
   }
 ]
 
-export default function DisplayPage() {
+export default function ExamplesPage() {
   return (
     <div className="stack">
       <div>
-        <h1>Display</h1>
+        <h1>Examples</h1>
         <p className="lede">
           <code>&lt;QrCode /&gt;</code> rendered from a server component. The SVG is part of the initial HTML, so the code
           is visible before hydration and nothing shifts. For pure server output with no client component, call{' '}
@@ -77,7 +81,7 @@ export default function DisplayPage() {
       <section className="card default-card" aria-labelledby="default-heading">
         <QrCode
           content={defaultContent}
-          appearance={{ size: 512, ...PGA_DEFAULT_APPEARANCE, caption: defaultCaption }}
+          appearance={defaultAppearance}
         />
         <div className="stack">
           <div>
@@ -97,18 +101,33 @@ export default function DisplayPage() {
               </div>
             ))}
           </dl>
+          <CodeBlock
+            label="Default example"
+            code={`import { PGA_DEFAULT_APPEARANCE } from '@pgahq/qr-codes'
+import { QrCode } from '@pgahq/qr-codes/react'
+import '@pgahq/qr-codes/styles.css'
+
+<QrCode
+  content={${toSource(defaultContent)}}
+  appearance={{ size: 512, ...PGA_DEFAULT_APPEARANCE, caption: ${toSource(defaultCaption)} }}
+/>`}
+          />
         </div>
       </section>
 
       <h2 className="section-title">Variations</h2>
       <div className="grid">
-        {examples.map((example) => (
-          <section key={example.title} className="card tile">
-            <h2>{example.title}</h2>
-            <QrCode content={example.content} appearance={{ size: 512, ...example.appearance }} />
-            <p>{example.note}</p>
-          </section>
-        ))}
+        {examples.map((example) => {
+          const appearance: QrAppearance = { size: 512, ...example.appearance }
+          return (
+            <section key={example.title} className="card tile">
+              <h2>{example.title}</h2>
+              <QrCode content={example.content} appearance={appearance} />
+              <p>{example.note}</p>
+              <CodeBlock label={example.title} code={reactSnippet(example.content, appearance)} />
+            </section>
+          )
+        })}
       </div>
     </div>
   )
