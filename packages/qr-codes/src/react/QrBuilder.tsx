@@ -561,7 +561,13 @@ export function QrBuilder({
   const onChangeRef = useRef(onChange)
   onChangeRef.current = onChange
   const { content: currentContent, appearance: currentAppearance } = state
+  const lastChange = useRef<string>(undefined)
   useEffect(() => {
+    // Compare by value: a host that passes an inline `appearance` gets a new object every render, and would
+    // otherwise loop when `onChange` stores the value in state.
+    const key = JSON.stringify([currentContent, currentAppearance])
+    if (key === lastChange.current) return
+    lastChange.current = key
     onChangeRef.current?.({ content: currentContent, appearance: currentAppearance })
   }, [currentContent, currentAppearance])
   const ready = !!state.qr.svg

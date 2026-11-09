@@ -108,7 +108,7 @@ import { QrCode } from '@pgahq/qr-codes/react'
 import '@pgahq/qr-codes/styles.css'
 
 <QrCode
-  content={{ type: 'url', url: 'https://pga.com/qr-code' }}
+  content={${toSource(defaultContent)}}
   appearance={{ size: 512, ...PGA_DEFAULT_APPEARANCE, caption: ${toSource(defaultCaption)} }}
 />`}
           />
