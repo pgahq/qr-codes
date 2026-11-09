@@ -4,7 +4,7 @@ import type { QrAppearance, QrContent } from '@pgahq/qr-codes'
 import { QrBuilder, type QrBuilderEvent } from '@pgahq/qr-codes/react'
 import { useState } from 'react'
 import { CodeBlock } from '../code-block'
-import { apiSnippet, coreSnippet, imageLink, reactSnippet } from '../code-snippets'
+import { apiSnippet, coreSnippet, imageLink, imageLinkState, reactSnippet } from '../code-snippets'
 
 function Snippet({ title, code }: { title: string; code: string }) {
   return (
@@ -19,7 +19,7 @@ export default function BuilderPage() {
   const [events, setEvents] = useState<string[]>([])
   const [snapshot, setSnapshot] = useState<{ content: QrContent; appearance: QrAppearance } | null>(null)
 
-  const link = snapshot ? imageLink(snapshot.content, snapshot.appearance, window.location.origin) : null
+  const link = snapshot ? imageLinkState(snapshot.content, snapshot.appearance, window.location.origin) : null
 
   const onEvent = (event: QrBuilderEvent) =>
     setEvents((prev) => [`${new Date().toLocaleTimeString()}  ${JSON.stringify(event)}`, ...prev].slice(0, 20))
@@ -60,14 +60,10 @@ export default function BuilderPage() {
             />
             <div className="stack">
               <strong>Link button URL</strong>
-              {link ? (
-                <CodeBlock code={link} label="Link button URL" />
+              {link && 'url' in link ? (
+                <CodeBlock code={link.url} label="Link button URL" />
               ) : (
-                <p className="muted">
-                  {snapshot.content.type === 'url'
-                    ? 'Enter a valid URL to get a link.'
-                    : 'The link is only available for URL codes. Use the POST request above for Wi-Fi and text codes.'}
-                </p>
+                <p className="muted">{link?.reason}</p>
               )}
             </div>
           </>

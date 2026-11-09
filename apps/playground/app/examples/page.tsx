@@ -1,7 +1,7 @@
 import { PGA_DEFAULT_APPEARANCE, PGA_LOGOS, type QrAppearance, type QrContent } from '@pgahq/qr-codes'
 import { QrCode } from '@pgahq/qr-codes/react'
 import { CodeBlock } from '../code-block'
-import { reactSnippet } from '../code-snippets'
+import { reactSnippet, toSource } from '../code-snippets'
 
 interface Example {
   title: string
@@ -105,10 +105,11 @@ export default function ExamplesPage() {
             label="Default example"
             code={`import { PGA_DEFAULT_APPEARANCE } from '@pgahq/qr-codes'
 import { QrCode } from '@pgahq/qr-codes/react'
+import '@pgahq/qr-codes/styles.css'
 
 <QrCode
   content={{ type: 'url', url: 'https://pga.com/qr-code' }}
-  appearance={{ size: 512, ...PGA_DEFAULT_APPEARANCE, caption: '${defaultCaption}' }}
+  appearance={{ size: 512, ...PGA_DEFAULT_APPEARANCE, caption: ${toSource(defaultCaption)} }}
 />`}
           />
         </div>
