@@ -26,14 +26,11 @@ jobs:
 
       - run: npm ci
 
-      - name: Typecheck (package, then playground against the built package)
+      - name: Typecheck
         run: npm run typecheck
 
       - name: Test
         run: npm test
-
-      - name: Build playground
-        run: npm run build:playground
 
       - name: Check the package contents
         run: npm pack --dry-run -w @pgahq/qr-codes

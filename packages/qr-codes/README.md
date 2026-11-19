@@ -156,7 +156,7 @@ Development needs Node 22 or newer (the React tests use jsdom). The published pa
 
 ```bash
 npm ci
-npm run dev        # builds the package, then starts the playground on http://localhost:3100
+npm run dev        # rebuilds the package on change (the playground is on technology.pgahq.com/qr-codes)
 npm run typecheck
 npm test           # includes decoding rendered codes with ZXing at several sizes
 ```
