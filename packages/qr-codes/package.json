@@ -1,8 +1,17 @@
 {
-  "name": "@pgahq/qr-codes",
-  "version": "0.2.0",
+  "name": "@pga/qr-codes",
+  "version": "0.3.0",
   "description": "Generate PGA-branded QR codes: payload encoding (URL, Wi-Fi, SMS), SVG/PNG rendering, React components, and a Web-standard API handler.",
-  "license": "UNLICENSED",
+  "keywords": [
+    "qr",
+    "qr-code",
+    "qrcode",
+    "svg",
+    "react",
+    "wifi",
+    "pga"
+  ],
+  "license": "MIT",
   "sideEffects": [
     "*.css"
   ],
@@ -46,7 +55,8 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && tsup",
@@ -56,8 +66,8 @@
     "prepublishOnly": "npm run typecheck && npm test && npm run build"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com",
-    "access": "restricted"
+    "access": "public",
+    "provenance": true
   },
   "dependencies": {
     "qrcode": "^1.5.4"

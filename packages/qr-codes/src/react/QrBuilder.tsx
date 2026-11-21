@@ -541,7 +541,7 @@ function StylePicker({ state, showStyles, showColors }: { state: QrBuilderState;
 
 /**
  * Full QR builder: choose a type (URL, Wi-Fi, SMS), add a logo and caption,
- * preview, then download or copy. Import `@pgahq/qr-codes/styles.css` once.
+ * preview, then download or copy. Import `@pga/qr-codes/styles.css` once.
  */
 export function QrBuilder({
   className,

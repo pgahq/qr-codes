@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-// Builds the commit that lets consumers install @pgahq/qr-codes straight from git:
+// Builds the commit that lets consumers install @pga/qr-codes straight from git:
 //
-//   bun add git+ssh://git@github.com/pgahq/qr-codes#git-v<version>
+//   bun add github:pgahq/qr-codes#git-v<version>
 //
 // The source tag (v<version>) only holds the monorepo, whose root package is the private
 // "qr-codes" and whose dist/ is never committed. Bun and npm cannot install a git subfolder,
-// so this script makes a second commit whose root *is* the package: the built dist/, README
-// and a package.json named @pgahq/qr-codes with the same exports and dependencies, minus
+// so this script makes a second commit whose root *is* the package: the built dist/, README, LICENSE
+// and a package.json named @pga/qr-codes with the same exports and dependencies, minus
 // scripts, devDependencies and publishConfig (so a git install builds nothing and pulls in
 // nothing from the playground). The commit's parent is the source commit it was built from.
 //

@@ -1,5 +1,5 @@
-import { PGA_DEFAULT_APPEARANCE, PGA_LOGOS, type QrAppearance, type QrContent } from '@pgahq/qr-codes'
-import { QrCode } from '@pgahq/qr-codes/react'
+import { PGA_DEFAULT_APPEARANCE, PGA_LOGOS, type QrAppearance, type QrContent } from '@pga/qr-codes'
+import { QrCode } from '@pga/qr-codes/react'
 import { CodeBlock } from '../code-block'
 import { reactSnippet, toSource } from '../code-snippets'
 
@@ -103,9 +103,9 @@ export default function ExamplesPage() {
           </dl>
           <CodeBlock
             label="Default example"
-            code={`import { PGA_DEFAULT_APPEARANCE } from '@pgahq/qr-codes'
-import { QrCode } from '@pgahq/qr-codes/react'
-import '@pgahq/qr-codes/styles.css'
+            code={`import { PGA_DEFAULT_APPEARANCE } from '@pga/qr-codes'
+import { QrCode } from '@pga/qr-codes/react'
+import '@pga/qr-codes/styles.css'
 
 <QrCode
   content={${toSource(defaultContent)}}

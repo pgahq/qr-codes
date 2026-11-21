@@ -1,6 +1,6 @@
 'use client'
 
-import { copyTextToClipboard } from '@pgahq/qr-codes'
+import { copyTextToClipboard } from '@pga/qr-codes'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 
 function Icon({ children, strokeWidth = 2 }: { children: ReactNode; strokeWidth?: number }) {
