@@ -165,7 +165,7 @@ npm test           # includes decoding rendered codes with ZXing at several size
 
 ## Release
 
-The package is published to the public npm registry (with provenance) by `.github/workflows/publish.yml`. It uses npm trusted publishing (OIDC), so no npm token is stored anywhere and nothing expires. The one-time setup is in the comment at the top of the workflow.
+The package is published to the public npm registry (with provenance) by `.github/workflows/publish.yml`, using the repository's `NPM_TOKEN` secret. npm tokens expire after about 90 days, so replace the secret before then; the comment at the top of the workflow explains how to switch to tokenless trusted publishing instead.
 
 1. Bump `version` in `packages/qr-codes/package.json` and merge to `main`.
 2. Tag the merge commit and push the tag:
