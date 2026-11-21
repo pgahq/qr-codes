@@ -1,4 +1,4 @@
-import { encodeQrContent, PGA_LOGOS, type QrAppearance, type QrContent } from '@pgahq/qr-codes'
+import { encodeQrContent, PGA_LOGOS, type QrAppearance, type QrContent } from '@pga/qr-codes'
 
 const logoExpressions = new Map<string, string>(
   Object.entries(PGA_LOGOS).map(([name, logo]) => [logo.src, `PGA_LOGOS.${name}.src`])
@@ -68,9 +68,9 @@ export function reactSnippet(content: QrContent, appearance: QrAppearance): stri
   const imports = coreImports(appearanceSource)
   return [
     ...sourceComments(content, appearance),
-    ...(imports.length ? [`import { ${imports.join(', ')} } from '@pgahq/qr-codes'`] : []),
-    `import { QrCode } from '@pgahq/qr-codes/react'`,
-    `import '@pgahq/qr-codes/styles.css'`,
+    ...(imports.length ? [`import { ${imports.join(', ')} } from '@pga/qr-codes'`] : []),
+    `import { QrCode } from '@pga/qr-codes/react'`,
+    `import '@pga/qr-codes/styles.css'`,
     '',
     '<QrCode',
     `  content={${contentSource}}`,
@@ -84,7 +84,7 @@ export function coreSnippet(content: QrContent, appearance: QrAppearance): strin
   const appearanceSource = toSource(forSource(appearance), 0)
   return [
     ...sourceComments(content, appearance),
-    `import { ${[...coreImports(appearanceSource), 'renderQrSvg'].join(', ')} } from '@pgahq/qr-codes'`,
+    `import { ${[...coreImports(appearanceSource), 'renderQrSvg'].join(', ')} } from '@pga/qr-codes'`,
     '',
     `const svg = renderQrSvg(${contentSource}, ${appearanceSource})`
   ].join('\n')

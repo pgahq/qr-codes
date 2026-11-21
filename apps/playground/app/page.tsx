@@ -4,7 +4,7 @@ const demos = [
   {
     href: '/builder',
     title: 'Builder',
-    body: '<QrBuilder /> from @pgahq/qr-codes/react: URL, Wi-Fi and SMS codes with logo, caption, download and copy.'
+    body: '<QrBuilder /> from @pga/qr-codes/react: URL, Wi-Fi and SMS codes with logo, caption, download and copy.'
   },
   {
     href: '/examples',
@@ -14,7 +14,7 @@ const demos = [
   {
     href: '/api-playground',
     title: 'API',
-    body: '/api/qr built with createQrHandler from @pgahq/qr-codes/server: GET for <img>, POST for secrets, SVG and PNG.'
+    body: '/api/qr built with createQrHandler from @pga/qr-codes/server: GET for <img>, POST for secrets, SVG and PNG.'
   }
 ]
 
@@ -22,7 +22,7 @@ export default function Home() {
   return (
     <div className="stack">
       <div>
-        <h1>@pgahq/qr-codes</h1>
+        <h1>@pga/qr-codes</h1>
         <p className="lede">
           Temporary playground for the shared QR package. The package is installed from a packed tarball, the same way a
           consuming app would get it.

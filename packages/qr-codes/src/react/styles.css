@@ -1,4 +1,4 @@
-/* @pgahq/qr-codes styles. Override the custom properties on .pga-qr-builder / .pga-qr-code to theme. */
+/* @pga/qr-codes styles. Override the custom properties on .pga-qr-builder / .pga-qr-code to theme. */
 .pga-qr-builder,
 .pga-qr-menu {
   --pga-qr-navy: #00205b;

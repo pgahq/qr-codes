@@ -1,4 +1,4 @@
-# @pgahq/qr-codes
+# @pga/qr-codes
 
 PGA QR codes in one package: payload encoding (URL, Wi-Fi, SMS, text), a deterministic SVG renderer, browser PNG download/copy, React components, and a Web-standard API handler.
 
@@ -7,8 +7,8 @@ It replaces the `QrComponents` code in `cloudcannon-component-library` (Gatsby, 
 ## Install
 
 ```bash
-npm install @pgahq/qr-codes
-# or: bun add @pgahq/qr-codes / pnpm add @pgahq/qr-codes / yarn add @pgahq/qr-codes
+npm install @pga/qr-codes
+# or: bun add @pga/qr-codes / pnpm add @pga/qr-codes / yarn add @pga/qr-codes
 
 # optional: PNG output from the API handler
 npm install @resvg/resvg-js
@@ -19,19 +19,19 @@ No registry setup or token is needed: it is on the public npm registry.
 Try it in one file:
 
 ```ts
-import { renderQrSvg } from '@pgahq/qr-codes'
+import { renderQrSvg } from '@pga/qr-codes'
 
 const svg = renderQrSvg({ type: 'url', url: 'pga.org' })
 ```
 
 ### Install from git
 
-Every release also gets a `git-v<version>` tag whose root is the built package (`dist/` included, named `@pgahq/qr-codes`). Use it to try an unpublished commit or to pin a git ref:
+Every release also gets a `git-v<version>` tag whose root is the built package (`dist/` included, named `@pga/qr-codes`). Use it to try an unpublished commit or to pin a git ref:
 
 ```bash
-npm install github:pgahq/qr-codes#git-v0.2.0
+npm install github:pgahq/qr-codes#git-v0.3.0
 # or
-bun add github:pgahq/qr-codes#git-v0.2.0
+bun add github:pgahq/qr-codes#git-v0.3.0
 ```
 
 Pin a `git-v<version>` tag or the commit it resolves to. Do not pin `v<version>` or a branch: those contain the monorepo source and no `dist/`, and a git install does not build.
@@ -42,10 +42,10 @@ The `git-v` tag installs the same files as the registry package (same exports, d
 
 | Import | Runs in | What it has |
 | --- | --- | --- |
-| `@pgahq/qr-codes` | browser and server | `renderQrSvg`, `encodeQrContent`, `normalizeUrl`, logo inlining, `downloadQr`, `copyQrToClipboard`, `copyQrSvgToClipboard`, `PGA_LOGOS` |
-| `@pgahq/qr-codes/react` | browser (client components) | `<QrBuilder />`, `<QrCode />`, `useQrBuilder`, `useQrSvg` |
-| `@pgahq/qr-codes/server` | server | `createQrHandler`, `parseQrRequest`, `renderPng` |
-| `@pgahq/qr-codes/styles.css` | | styles for `<QrBuilder />` and `<QrCode />` |
+| `@pga/qr-codes` | browser and server | `renderQrSvg`, `encodeQrContent`, `normalizeUrl`, logo inlining, `downloadQr`, `copyQrToClipboard`, `copyQrSvgToClipboard`, `PGA_LOGOS` |
+| `@pga/qr-codes/react` | browser (client components) | `<QrBuilder />`, `<QrCode />`, `useQrBuilder`, `useQrSvg` |
+| `@pga/qr-codes/server` | server | `createQrHandler`, `parseQrRequest`, `renderPng` |
+| `@pga/qr-codes/styles.css` | | styles for `<QrBuilder />` and `<QrCode />` |
 
 React and `@resvg/resvg-js` are optional peer dependencies. SVG-only consumers need neither.
 
@@ -55,7 +55,7 @@ The package owns the API *logic* (`createQrHandler`: validation, logo fetching, 
 
 ```ts
 // app/api/qr/route.ts (Next.js)
-import { createQrHandler } from '@pgahq/qr-codes/server'
+import { createQrHandler } from '@pga/qr-codes/server'
 
 const handler = createQrHandler()
 export const GET = handler
@@ -107,8 +107,8 @@ Errors are JSON: `400` for malformed requests, `422` for content or logo problem
 ## React
 
 ```tsx
-import '@pgahq/qr-codes/styles.css'
-import { QrBuilder, QrCode } from '@pgahq/qr-codes/react'
+import '@pga/qr-codes/styles.css'
+import { QrBuilder, QrCode } from '@pga/qr-codes/react'
 
 <QrBuilder appearance={{ foreground: '#00205B' }} onEvent={(event) => track(event)} />
 
@@ -134,7 +134,7 @@ import { QrBuilder, QrCode } from '@pgahq/qr-codes/react'
 ## Core
 
 ```ts
-import { renderQrSvg, encodeQrContent } from '@pgahq/qr-codes'
+import { renderQrSvg, encodeQrContent } from '@pga/qr-codes'
 
 const svg = renderQrSvg(
   { type: 'wifi', ssid: 'Club House', password: 'fairway123' },
@@ -171,7 +171,7 @@ The package is published to the public npm registry (with provenance) by `.githu
 2. Tag the merge commit and push the tag:
 
    ```bash
-   git tag v0.2.0 && git push origin v0.2.0
+   git tag v0.3.0 && git push origin v0.3.0
    ```
 
 The workflow checks that the tag matches the package version, runs typecheck, tests and build, then pushes the `git-v<version>` tag for git installs (`scripts/git-release.mjs`; it is skipped if that tag already exists), then publishes to npm. Running the workflow manually from a branch only does a dry run. Published versions cannot be overwritten, so a bad release needs a new version.

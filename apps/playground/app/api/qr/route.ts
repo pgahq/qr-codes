@@ -1,4 +1,4 @@
-import { createQrHandler } from '@pgahq/qr-codes/server'
+import { createQrHandler } from '@pga/qr-codes/server'
 
 // The package owns validation, logo fetching and rendering. The app owns routing,
 // and is where auth, rate limiting or analytics would wrap the handler.

@@ -1,7 +1,7 @@
 'use client'
 
-import type { QrAppearance, QrContent } from '@pgahq/qr-codes'
-import { QrBuilder, type QrBuilderEvent } from '@pgahq/qr-codes/react'
+import type { QrAppearance, QrContent } from '@pga/qr-codes'
+import { QrBuilder, type QrBuilderEvent } from '@pga/qr-codes/react'
 import { useState } from 'react'
 import { CodeBlock } from '../code-block'
 import { apiSnippet, coreSnippet, imageLink, imageLinkState, reactSnippet } from '../code-snippets'

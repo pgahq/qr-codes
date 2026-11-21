@@ -1,6 +1,6 @@
 # qr-codes
 
-`@pgahq/qr-codes`: QR code generation for PGA apps (URL, Wi-Fi, SMS and text codes; SVG and PNG; React components; a Web-standard API handler). Published to the public npm registry: `npm install @pgahq/qr-codes`.
+`@pga/qr-codes`: QR code generation for PGA apps (URL, Wi-Fi, SMS and text codes; SVG and PNG; React components; a Web-standard API handler). Published to the public npm registry: `npm install @pga/qr-codes`.
 
 | Path | What it is |
 | --- | --- |
