@@ -1,13 +1,13 @@
 name: Publish
 
-# Publishes @pgahq/qr-codes to the public npm registry (https://www.npmjs.com/package/@pgahq/qr-codes)
+# Publishes @pga/qr-codes to the public npm registry (https://www.npmjs.com/package/@pga/qr-codes)
 # and pushes a built git-v<version> tag that can be installed straight from git.
 #
 # Release flow:
 #   1. Bump "version" in packages/qr-codes/package.json and merge to main.
 #   2. Tag the merge commit:  git tag v<version> && git push origin v<version>
 #
-# Publishing uses the NPM_TOKEN repository secret (an npm token that can publish @pgahq packages).
+# Publishing uses the NPM_TOKEN repository secret (an npm token that can publish @pga packages).
 # npm caps token lifetime at about 90 days, so replace the secret before it expires. To drop the
 # token: after the first version is on npm, add this repo and publish.yml as the package's Trusted
 # Publisher (npmjs.com > package Settings), install npm >= 11.5.1 in this job, and delete the
