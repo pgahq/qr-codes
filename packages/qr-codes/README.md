@@ -29,9 +29,9 @@ const svg = renderQrSvg({ type: 'url', url: 'pga.org' })
 Every release also gets a `git-v<version>` tag whose root is the built package (`dist/` included, named `@pga/qr-codes`). Use it to try an unpublished commit or to pin a git ref:
 
 ```bash
-npm install github:pgahq/qr-codes#git-v0.3.0
+npm install github:pgahq/qr-codes#git-v0.3.1
 # or
-bun add github:pgahq/qr-codes#git-v0.3.0
+bun add github:pgahq/qr-codes#git-v0.3.1
 ```
 
 Pin a `git-v<version>` tag or the commit it resolves to. Do not pin `v<version>` or a branch: those contain the monorepo source and no `dist/`, and a git install does not build.
@@ -165,13 +165,13 @@ npm test           # includes decoding rendered codes with ZXing at several size
 
 ## Release
 
-The package is published to the public npm registry (with provenance) by `.github/workflows/publish.yml`, using the repository's `NPM_TOKEN` secret. npm tokens expire after about 90 days, so replace the secret before then; the comment at the top of the workflow explains how to switch to tokenless trusted publishing instead.
+The package is published to the public npm registry (with provenance) by `.github/workflows/publish.yml`, using npm trusted publishing, so no npm token is stored in the repository. The trusted publisher is configured on npmjs.com under the package's Settings; if `publish.yml` is renamed, update it there.
 
 1. Bump `version` in `packages/qr-codes/package.json` and merge to `main`.
 2. Tag the merge commit and push the tag:
 
    ```bash
-   git tag v0.3.0 && git push origin v0.3.0
+   git tag v0.3.1 && git push origin v0.3.1
    ```
 
 The workflow checks that the tag matches the package version, runs typecheck, tests and build, then pushes the `git-v<version>` tag for git installs (`scripts/git-release.mjs`; it is skipped if that tag already exists), then publishes to npm. Running the workflow manually from a branch only does a dry run. Published versions cannot be overwritten, so a bad release needs a new version.
